@@ -35,7 +35,7 @@ theme_override_constants/separation = 24
 
 [node name="Title" type="Label" parent="Root/Center/VBox"]
 theme_override_font_sizes/font_size = 36
-text = "WAVE CLEAR – vyber upgrade"
+text = "WAVE CLEAR – vyber upgrade (pozor na corrupt!)"
 horizontal_alignment = 1
 
 [node name="Cards" type="HBoxContainer" parent="Root/Center/VBox"]
@@ -43,20 +43,68 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Card1" type="Button" parent="Root/Center/VBox/Cards"]
-custom_minimum_size = Vector2(280, 200)
+custom_minimum_size = Vector2(300, 260)
 theme_override_font_sizes/font_size = 18
-text = "Upgrade"
 autowrap_mode = 3
 
 [node name="Card2" type="Button" parent="Root/Center/VBox/Cards"]
-custom_minimum_size = Vector2(280, 200)
+custom_minimum_size = Vector2(300, 260)
 theme_override_font_sizes/font_size = 18
-text = "Upgrade"
 autowrap_mode = 3
 
 [node name="Card3" type="Button" parent="Root/Center/VBox/Cards"]
-custom_minimum_size = Vector2(280, 200)
+custom_minimum_size = Vector2(300, 260)
 theme_override_font_sizes/font_size = 18
-text = "Upgrade"
 autowrap_mode = 3
+
+[node name="Text" type="RichTextLabel" parent="Root/Center/VBox/Cards/Card1"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 19
+bbcode_enabled = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="Text" type="RichTextLabel" parent="Root/Center/VBox/Cards/Card2"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 19
+bbcode_enabled = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="Text" type="RichTextLabel" parent="Root/Center/VBox/Cards/Card3"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 19
+bbcode_enabled = true
+scroll_active = false
+vertical_alignment = 1
 

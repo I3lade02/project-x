@@ -27,7 +27,9 @@ var game_over := false
 func _ready():
 	player.heat_changed.connect(_on_heat_changed)
 	player.crashed.connect(func(): show_status("SYSTEM CRASH - REBOOTING..."))
-	player.rebooted.connect(func(): show_status(""))
+	player.rebooted.connect(func():
+		show_status("")
+		Juice.play("reboot", -4.0, 0.0))
 	player.died.connect(_on_player_died)
 	upgrade_screen.chosen.connect(_on_upgrade_chosen)
 	start_next_wave()
@@ -52,7 +54,7 @@ func start_next_wave():
 	if game_over:
 		return
 	wave += 1
-	to_spawn = 3 + wave * 2
+	to_spawn = 3 + wave * 2 + player.extra_enemies
 	spawn_timer = 1.5
 	wave_label.text = "WAVE %d" % wave
 	show_status("WAVE %d" % wave, 1.5)
@@ -61,7 +63,8 @@ func start_next_wave():
 func spawn_enemy():
 	var e = ENEMY_SCENE.instantiate()
 	e.global_position = spawn_points.get_children().pick_random().global_position
-	e.speed = 110.0 + wave * 12.0
+	e.speed = (110.0 + wave * 12.0) * player.enemy_speed_mult
+	e.hp += player.enemy_hp_bonus
 	e.died.connect(_on_enemy_died)
 	add_child(e)
 	to_spawn -= 1
@@ -80,10 +83,11 @@ func _on_enemy_died(pos):
 	alive -= 1
 	score += 10 * player.multiplier()
 	update_score()
-	if randf() < DROP_CHANCE:
+	if randf() < DROP_CHANCE * player.drop_mult:
 		spawn_pickup(pos)
 	if to_spawn == 0 and alive == 0 and not game_over:
 		show_status("WAVE CLEAR!", 1.0)
+		Juice.play("wave_clear", -2.0, 0.0)
 		get_tree().create_timer(1.0).timeout.connect(_offer_upgrades)
 
 
@@ -94,16 +98,24 @@ func _offer_upgrades():
 	if choices.is_empty():
 		start_next_wave()           # všechno už na maximu
 		return
-	upgrade_screen.open(choices, player.upgrades)
+	var corrupts = []
+	for id in choices:
+		corrupts.append(Upgrades.pick_corrupt(id, player.corrupts))
+	upgrade_screen.open(choices, corrupts, player.upgrades, player.corrupts)
 
 
-func _on_upgrade_chosen(id):
-	player.apply_upgrade(id)
+func _on_upgrade_chosen(upgrade_id, corrupt_id):
+	Juice.play("upgrade", -2.0, 0.0)
+	player.apply_upgrade(upgrade_id)
+	player.apply_corrupt(corrupt_id)
 	start_next_wave()
 
 
 func _on_player_died():
 	game_over = true
+	Juice.play("game_over", 0.0, 0.0)
+	Juice.shake(1.0)
+	Juice.hitstop(0.3)
 	status.text = "GAME OVER\nScore: %d\nR = restart" % score
 
 

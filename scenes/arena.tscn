@@ -4,6 +4,10 @@
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/upgrade_screen.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/fan.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/hot_plate.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/moving_platform.tscn" id="7"]
+[ext_resource type="Script" uid="uid://fuqyr1qxi8yt" path="res://scripts/camera.gd" id="8"]
 
 [sub_resource type="RectangleShape2D" id="s0"]
 size = Vector2(1280, 40)
@@ -171,6 +175,23 @@ offset_right = 80.0
 offset_bottom = 10.0
 color = Color(0.25, 0.3, 0.4, 1)
 
+[node name="Obstacles" type="Node2D" parent="." unique_id=2130073248]
+
+[node name="HotPlateL" parent="Obstacles" unique_id=1135116240 instance=ExtResource("6")]
+position = Vector2(120, 680)
+
+[node name="HotPlateR" parent="Obstacles" unique_id=1216237670 instance=ExtResource("6")]
+position = Vector2(1160, 680)
+
+[node name="FanL" parent="Obstacles" unique_id=526105542 instance=ExtResource("5")]
+position = Vector2(465, 680)
+
+[node name="FanR" parent="Obstacles" unique_id=5164969 instance=ExtResource("5")]
+position = Vector2(815, 680)
+
+[node name="MovingPlatform" parent="Obstacles" unique_id=1867658642 instance=ExtResource("7")]
+position = Vector2(640, 280)
+
 [node name="Player" parent="." unique_id=1410897315 instance=ExtResource("2")]
 position = Vector2(640, 640)
 
@@ -235,3 +256,7 @@ position = Vector2(640, 100)
 [node name="PauseMenu" parent="." unique_id=1234114109 instance=ExtResource("3")]
 
 [node name="UpgradeScreen" parent="." unique_id=80044606 instance=ExtResource("4")]
+
+[node name="Camera" type="Camera2D" parent="." unique_id=1276673613]
+position = Vector2(640, 360)
+script = ExtResource("8")

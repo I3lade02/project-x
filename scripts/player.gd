@@ -24,6 +24,7 @@ const DROP_TIME = 0.25        # jak dlouho padá skrz plošinu
 const SPREAD = 0.15           # úhel mezi střelami ve vějíři (rad)
 const BLAST_RADIUS = 180.0
 const BLAST_DAMAGE = 5
+const WARN_HEAT = 85.0        # od kdy pípá varování
 
 # bonusy
 const DOUBLE_JUMP_TIME = 12.0
@@ -46,6 +47,15 @@ var thermal_blast := false
 var heat_power := false
 var upgrades := {}            # id : počet
 
+# --- corrupty ---
+var heat_up_mult := 1.0       # jak moc hřeje overclock
+var jam_chance := 0.0         # šance, že se výstřel zasekne
+var enemy_hp_bonus := 0       # čte aréna
+var enemy_speed_mult := 1.0   # čte aréna
+var extra_enemies := 0        # čte aréna
+var drop_mult := 1.0          # čte aréna
+var corrupts := {}            # id : počet
+
 # --- stav ---
 var heat := 0.0
 var cool_timer := 0.0
@@ -61,6 +71,7 @@ var dead := false
 var double_jump_timer := 0.0
 var nitro_timer := 0.0
 var drop_timer := 0.0
+var warned := false
 
 @onready var visual = $Visual
 @onready var body = $Visual/Body
@@ -116,6 +127,7 @@ func _physics_process(delta):
 		elif jumps_left > 0:
 			velocity.y = JUMP
 			jumps_left -= 1
+			Juice.play("jump", -6.0)
 
 	move_and_slide()
 
@@ -126,7 +138,7 @@ func _physics_process(delta):
 
 	# --- teplota ---
 	if overclock:
-		add_heat(HEAT_UP * delta)
+		add_heat(HEAT_UP * heat_up_mult * delta)
 	elif cool_timer > 0:
 		cool_timer -= delta
 	else:
@@ -138,6 +150,11 @@ func _physics_process(delta):
 
 func shoot():
 	fire_cd = (OC_FIRE_DELAY if overclock else FIRE_DELAY) * fire_rate_mult
+	add_heat(SHOT_HEAT * shot_heat_mult)
+	if randf() < jam_chance:
+		Juice.play("jam", -4.0)
+		return                                # packet loss – výstřel se zasekl
+	Juice.play("shoot", -8.0)
 	var count = 1 + multishot
 	var dmg = damage + (1 if heat_power and heat >= 50.0 else 0)
 	for i in count:
@@ -148,7 +165,6 @@ func shoot():
 		b.damage = dmg
 		b.pierce = pierce
 		get_tree().current_scene.add_child(b)
-	add_heat(SHOT_HEAT * shot_heat_mult)
 
 
 func add_heat(amount):
@@ -174,6 +190,9 @@ func hit(amount, from_x):
 		side = 1
 	knock = KNOCKBACK * side
 	velocity.y = -250
+	Juice.play("hurt")
+	Juice.shake(0.4)
+	Juice.hitstop(0.08)
 	add_heat(amount * contact_heat_mult)
 
 
@@ -212,6 +231,26 @@ func apply_upgrade(id):
 		"heatpower": heat_power = true
 
 
+# volá aréna spolu s upgradem
+func apply_corrupt(id):
+	if id == "":
+		return
+	corrupts[id] = corrupts.get(id, 0) + 1
+	match id:
+		"fan": cool_mult = max(cool_mult - 0.15, 0.3)
+		"sensor": heat_up_mult += 0.25
+		"fragment": shot_heat_mult *= 1.2
+		"io": fire_rate_mult *= 1.1
+		"heavy": speed_mult = max(speed_mult - 0.08, 0.5)
+		"firewall": enemy_hp_bonus += 1
+		"fastbugs": enemy_speed_mult += 0.1
+		"leak": extra_enemies += 2
+		"sensitive": contact_heat_mult *= 1.25
+		"boot": crash_time += 0.5
+		"packet": jam_chance += 0.15
+		"dry": drop_mult *= 0.7
+
+
 # násobič skóre podle teploty (x1 až x4)
 func multiplier():
 	return 1 + int(heat / 25.0)
@@ -220,12 +259,17 @@ func multiplier():
 func crash():
 	crash_timer = crash_time
 	smoke.emitting = true
+	Juice.play("crash")
+	Juice.shake(0.8)
+	Juice.hitstop(0.15)
 	crashed.emit()
 	if thermal_blast:
 		do_thermal_blast()
 
 
 func do_thermal_blast():
+	Juice.play("blast")
+	Juice.shake(1.0)
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if e.global_position.distance_to(global_position) < BLAST_RADIUS:
 			e.take_damage(BLAST_DAMAGE)
@@ -252,9 +296,15 @@ func update_visual():
 	else:
 		body.color = Color.WHITE.lerp(Color(1, 0.15, 0.1), t)   # červená podle teploty
 	smoke.emitting = heat > 60.0                            # kouř od 60 %
-	if heat > 85.0:                                         # třes těsně před crashem
+	if heat > WARN_HEAT:                                    # třes těsně před crashem
 		visual.position = Vector2(randf_range(-2, 2), randf_range(-2, 2))
 	else:
 		visual.position = Vector2.ZERO
+	# varovné pípnutí (jednou, znovu až po vychladnutí pod 75)
+	if heat > WARN_HEAT and not warned:
+		warned = true
+		Juice.play("warn", -4.0, 0.0)
+	elif heat < WARN_HEAT - 10.0:
+		warned = false
 	# blikání při nesmrtelnosti
 	visual.modulate.a = 0.4 if invuln > 0 and int(invuln * 20) % 2 == 0 else 1.0

@@ -43,4 +43,5 @@ func _process(delta):
 func _on_body_entered(b):
 	if b.has_method("apply_powerup"):
 		b.apply_powerup(type)
+		Juice.play("pickup")
 		queue_free()

@@ -74,3 +74,34 @@ text = "Odejít na plochu"
 
 [node name="Settings" parent="." instance=ExtResource("2")]
 visible = false
+
+[node name="BuildPanel" type="PanelContainer" parent="Root"]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_top = 40.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/BuildPanel"]
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Root/BuildPanel/Margin"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Root/BuildPanel/Margin/VBox"]
+theme_override_font_sizes/font_size = 28
+text = "BUILD"
+horizontal_alignment = 1
+
+[node name="BuildText" type="RichTextLabel" parent="Root/BuildPanel/Margin/VBox"]
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true

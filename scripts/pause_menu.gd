@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const MAIN_MENU = "res://scenes/main_menu.tscn"
+const Upgrades = preload("res://scripts/upgrades.gd")
 
 @onready var root = $Root
 @onready var continue_btn = $Root/Center/Panel/Margin/Menu/ContinueButton
@@ -8,6 +9,7 @@ const MAIN_MENU = "res://scenes/main_menu.tscn"
 @onready var settings_btn = $Root/Center/Panel/Margin/Menu/SettingsButton
 @onready var main_menu_btn = $Root/Center/Panel/Margin/Menu/MainMenuButton
 @onready var desktop_btn = $Root/Center/Panel/Margin/Menu/DesktopButton
+@onready var build_text = $Root/BuildPanel/Margin/VBox/BuildText
 @onready var settings = $Settings
 
 
@@ -37,6 +39,7 @@ func _unhandled_input(event):
 
 func pause():
 	get_tree().paused = true
+	refresh_build()
 	root.show()
 	continue_btn.grab_focus()
 
@@ -44,6 +47,29 @@ func pause():
 func resume():
 	get_tree().paused = false
 	root.hide()
+
+
+# přehled upgradů a corruptů hráče
+func refresh_build():
+	var player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		build_text.text = ""
+		return
+	var txt = _build_section("UPGRADY", "#60ff80", player.upgrades, Upgrades.LIST)
+	txt += "\n"
+	txt += _build_section("CORRUPTY", "#ff5050", player.corrupts, Upgrades.CORRUPTS)
+	build_text.text = txt
+
+
+func _build_section(title, color, owned: Dictionary, data: Dictionary):
+	var txt = "[b][color=%s]%s[/color][/b]\n" % [color, title]
+	if owned.is_empty():
+		return txt + "[color=gray]  zatím nic[/color]\n"
+	for id in owned:
+		var d = data[id]
+		txt += "[color=%s]• %s  x%d[/color]\n" % [color, d["name"], owned[id]]
+		txt += "[color=gray]   %s[/color]\n" % d["desc"]
+	return txt
 
 
 func _restart():
@@ -54,10 +80,6 @@ func _restart():
 func _open_settings():
 	root.hide()
 	settings.open()
-
-
-func _open_bonuses():
-	pass
 
 
 func _to_main_menu():

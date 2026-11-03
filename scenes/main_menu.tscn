@@ -54,6 +54,9 @@ custom_minimum_size = Vector2(300, 46)
 theme_override_font_sizes/font_size = 22
 text = "Konec"
 
+[node name="Settings" parent="." instance=ExtResource("2")]
+visible = false
+
 [node name="BonusesPanel" type="Control" parent="."]
 visible = false
 anchors_preset = 15
@@ -68,7 +71,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.8)
+color = Color(0, 0, 0, 0.85)
 
 [node name="Center" type="CenterContainer" parent="BonusesPanel"]
 anchors_preset = 15
@@ -78,6 +81,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="BonusesPanel/Center"]
+custom_minimum_size = Vector2(800, 560)
 
 [node name="Margin" type="MarginContainer" parent="BonusesPanel/Center/Panel"]
 theme_override_constants/margin_left = 24
@@ -86,21 +90,29 @@ theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
 [node name="VBox" type="VBoxContainer" parent="BonusesPanel/Center/Panel/Margin"]
-theme_override_constants/separation = 16
+theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox"]
 theme_override_font_sizes/font_size = 32
-text = "BONUSY"
+text = "NÁPOVĚDA"
 horizontal_alignment = 1
 
-[node name="RowJ" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+[node name="Tabs" type="TabContainer" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+
+[node name="Bonusy" type="VBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs"]
+theme_override_constants/separation = 16
+
+[node name="RowJ" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy"]
 theme_override_constants/separation = 14
 
-[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/RowJ"]
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowJ"]
 custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
 color = Color(0.2, 0.9, 1, 1)
 
-[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/RowJ/Icon"]
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowJ/Icon"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -111,19 +123,22 @@ text = "J"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/RowJ"]
-theme_override_font_sizes/font_size = 18
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowJ"]
+theme_override_font_sizes/font_size = 17
 text = "DOUBLE JUMP – 12 s můžeš skočit podruhé ve vzduchu."
+custom_minimum_size = Vector2(660, 0)
 size_flags_vertical = 4
+autowrap_mode = 3
 
-[node name="RowC" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+[node name="RowC" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy"]
 theme_override_constants/separation = 14
 
-[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/RowC"]
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowC"]
 custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
 color = Color(0.2, 0.4, 1, 1)
 
-[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/RowC/Icon"]
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowC/Icon"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -134,19 +149,22 @@ text = "C"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/RowC"]
-theme_override_font_sizes/font_size = 18
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowC"]
+theme_override_font_sizes/font_size = 17
 text = "CHLADIČ – okamžitě sníží teplotu o 50."
+custom_minimum_size = Vector2(660, 0)
 size_flags_vertical = 4
+autowrap_mode = 3
 
-[node name="RowN" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+[node name="RowN" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy"]
 theme_override_constants/separation = 14
 
-[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/RowN"]
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowN"]
 custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
 color = Color(0.9, 0.9, 1, 1)
 
-[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/RowN/Icon"]
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowN/Icon"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -157,23 +175,125 @@ text = "N"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/RowN"]
-theme_override_font_sizes/font_size = 18
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowN"]
+theme_override_font_sizes/font_size = 17
 text = "TEKUTÝ DUSÍK – 5 s se vůbec nezahříváš. Overclockuj naplno!"
+custom_minimum_size = Vector2(660, 0)
 size_flags_vertical = 4
+autowrap_mode = 3
 
-[node name="HSeparator" type="HSeparator" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+[node name="HSeparator" type="HSeparator" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy"]
 
-[node name="Tip" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+[node name="Tip" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy"]
 theme_override_font_sizes/font_size = 16
 text = "Bonusy padají z poražených bugů a po 8 s zmizí.\nČím vyšší teplota, tím vyšší násobič skóre (až x4).\nPřehřátí = CRASH. Zásah během crashe = konec hry!"
-custom_minimum_size = Vector2(560, 0)
+custom_minimum_size = Vector2(700, 0)
 autowrap_mode = 3
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="Překážky" type="VBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs"]
+theme_override_constants/separation = 16
+
+[node name="RowPlate" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlate"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(1, 0.3, 0.05, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlate/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlate"]
+theme_override_font_sizes/font_size = 17
+text = "ŽHAVÁ PLOTNA – když začne blikat, uteč! Rozpálená tě rychle ohřívá, ale bugy na ní ztrácí HP – lákej je tam."
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+autowrap_mode = 3
+
+[node name="RowFan" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowFan"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(0.4, 0.8, 1, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowFan/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowFan"]
+theme_override_font_sizes/font_size = 17
+text = "VENTILÁTOR – ve sloupci vzduchu rychle chladneš (i při overclocku) a vzduch tě nadnáší."
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+autowrap_mode = 3
+
+[node name="RowPlatform" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlatform"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(0.4, 0.35, 0.6, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlatform/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlatform"]
+theme_override_font_sizes/font_size = 17
+text = "POHYBLIVÁ PLOŠINA – jezdí sem a tam, veze tebe i bugy. Dá se proskočit i propadnout."
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+autowrap_mode = 3
+
+[node name="HSeparator" type="HSeparator" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky"]
+
+[node name="Tip" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky"]
+theme_override_font_sizes/font_size = 16
+text = "Dolů + skok = propadneš plošinou. Bugové umí propadávat taky!"
+custom_minimum_size = Vector2(700, 0)
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="Upgrady" type="RichTextLabel" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs"]
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true
+
+[node name="Corrupty" type="RichTextLabel" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs"]
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true
 
 [node name="BackButton" type="Button" parent="BonusesPanel/Center/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(300, 46)
+size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "Zpět"
 
-[node name="Settings" parent="." instance=ExtResource("2")]
-visible = false
