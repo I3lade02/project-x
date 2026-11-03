@@ -1,6 +1,7 @@
 extends Control
 
 const ARENA = "res://scenes/arena.tscn"
+const Upgrades = preload("res://scripts/upgrades.gd")
 
 @onready var menu = $Center
 @onready var start_btn = $Center/Menu/StartButton
@@ -9,11 +10,14 @@ const ARENA = "res://scenes/arena.tscn"
 @onready var quit_btn = $Center/Menu/QuitButton
 @onready var bonuses = $BonusesPanel
 @onready var bonuses_back = $BonusesPanel/Center/Panel/Margin/VBox/BackButton
+@onready var upgrades_text = $BonusesPanel/Center/Panel/Margin/VBox/Tabs/Upgrady
+@onready var corrupts_text = $BonusesPanel/Center/Panel/Margin/VBox/Tabs/Corrupty
 @onready var settings = $Settings
 
 
 func _ready():
 	get_tree().paused = false
+	Engine.time_scale = 1.0
 	start_btn.pressed.connect(func(): get_tree().change_scene_to_file(ARENA))
 	settings_btn.pressed.connect(_open_settings)
 	bonuses_btn.pressed.connect(_open_bonuses)
@@ -22,6 +26,7 @@ func _ready():
 	settings.closed.connect(func():
 		menu.show()
 		settings_btn.grab_focus())
+	_fill_help()
 	start_btn.grab_focus()
 
 
@@ -31,6 +36,21 @@ func _unhandled_input(event):
 			settings.close()
 		elif bonuses.visible:
 			_close_bonuses()
+
+
+# naplní záložky Upgrady a Corrupty přímo z upgrades.gd
+func _fill_help():
+	var txt = "[color=gray]Po každé vlně si vybereš 1 ze 3 upgradů. Dají se stackovat do limitu.[/color]\n\n"
+	for id in Upgrades.LIST:
+		var u = Upgrades.LIST[id]
+		txt += "[b][color=#60ff80]%s[/color][/b]  [color=gray](max %d)[/color]\n%s\n\n" % [u["name"], u["max"], u["desc"]]
+	upgrades_text.text = txt
+
+	txt = "[color=gray]Každý upgrade s sebou nese náhodný corrupt (postih). Nikdy nedostaneš corrupt, který by ruší právě vybraný upgrade.[/color]\n\n"
+	for id in Upgrades.CORRUPTS:
+		var c = Upgrades.CORRUPTS[id]
+		txt += "[b][color=#ff5050]%s[/color][/b]  [color=gray](max %d)[/color]\n%s\n\n" % [c["name"], c["max"], c["desc"]]
+	corrupts_text.text = txt
 
 
 func _open_settings():
