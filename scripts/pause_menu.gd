@@ -30,7 +30,7 @@ func _unhandled_input(event):
 			settings.close()          # Esc v nastavení = zpět do pauzy
 		elif root.visible:
 			resume()
-		else:
+		elif not get_tree().paused:   # nepauzuj, když je otevřený výběr upgradu
 			pause()
 		get_viewport().set_input_as_handled()
 
@@ -54,6 +54,10 @@ func _restart():
 func _open_settings():
 	root.hide()
 	settings.open()
+
+
+func _open_bonuses():
+	pass
 
 
 func _to_main_menu():

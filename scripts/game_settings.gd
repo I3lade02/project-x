@@ -6,6 +6,7 @@ const PATH = "user://settings.cfg"
 const REBINDABLE = {
 	"move_left": "Doleva",
 	"move_right": "Doprava",
+	"move_down": "Dolů (propadnout)",
 	"jump": "Skok",
 	"shoot": "Střelba",
 	"overclock": "Overclock",

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bmb6ijj3qnvvw" path="res://scripts/arena.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/upgrade_screen.tscn" id="4"]
 
 [sub_resource type="RectangleShape2D" id="s0"]
 size = Vector2(1280, 40)
@@ -82,6 +83,7 @@ color = Color(0.25, 0.3, 0.4, 1)
 
 [node name="P1" type="StaticBody2D" parent="Platforms" unique_id=2037486660]
 position = Vector2(320, 560)
+collision_layer = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/P1" unique_id=715586638]
 shape = SubResource("s3")
@@ -96,6 +98,7 @@ color = Color(0.25, 0.3, 0.4, 1)
 
 [node name="P2" type="StaticBody2D" parent="Platforms" unique_id=52606307]
 position = Vector2(960, 560)
+collision_layer = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/P2" unique_id=644313374]
 shape = SubResource("s4")
@@ -110,6 +113,7 @@ color = Color(0.25, 0.3, 0.4, 1)
 
 [node name="P3" type="StaticBody2D" parent="Platforms" unique_id=1701170254]
 position = Vector2(640, 420)
+collision_layer = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/P3" unique_id=1347533201]
 shape = SubResource("s5")
@@ -124,6 +128,7 @@ color = Color(0.25, 0.3, 0.4, 1)
 
 [node name="P4" type="StaticBody2D" parent="Platforms" unique_id=189906887]
 position = Vector2(200, 280)
+collision_layer = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/P4" unique_id=808239331]
 shape = SubResource("s6")
@@ -138,6 +143,7 @@ color = Color(0.25, 0.3, 0.4, 1)
 
 [node name="P5" type="StaticBody2D" parent="Platforms" unique_id=262050355]
 position = Vector2(1080, 280)
+collision_layer = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/P5" unique_id=399475642]
 shape = SubResource("s7")
@@ -152,6 +158,7 @@ color = Color(0.25, 0.3, 0.4, 1)
 
 [node name="P6" type="StaticBody2D" parent="Platforms" unique_id=216325561]
 position = Vector2(640, 160)
+collision_layer = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/P6" unique_id=89365263]
 shape = SubResource("s8")
@@ -226,3 +233,5 @@ position = Vector2(1220, 100)
 position = Vector2(640, 100)
 
 [node name="PauseMenu" parent="." unique_id=1234114109 instance=ExtResource("3")]
+
+[node name="UpgradeScreen" parent="." unique_id=80044606 instance=ExtResource("4")]

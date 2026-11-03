@@ -4,11 +4,18 @@ signal died(pos)
 
 const GRAVITY = 1400.0
 const JUMP = -650.0
+const PLATFORM_LAYER = 5
+const DROP_TIME = 0.25
+const SEPARATION_DIST = 34.0
+const SEPARATION_FORCE = 0.8
 
 var speed := 120.0
 var hp := 3
 var contact_heat := 20.0
 var jump_cd := 0.0
+var drop_timer := 0.0
+var target_offset := 0.0
+var accel := 1200.0
 var player
 
 @onready var body = $Body
@@ -16,30 +23,60 @@ var player
 
 
 func _ready():
+	add_to_group("enemies")
 	player = get_tree().get_first_node_in_group("player")
+	# trochu jiné
+	speed *= randf_range(0.85, 1.15)
+	target_offset = randf_range(-30.0, 30.0)
+	accel = randf_range(900.0, 1500.0)
 
 
 func _physics_process(delta):
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
-
+		
+	jump_cd -= delta
+	drop_timer -= delta
+	set_collision_mask_value(PLATFORM_LAYER, drop_timer <= 0)
+	
+	var desired_x := 0.0
 	if player:
-		var dx = player.global_position.x - global_position.x
-		velocity.x = sign(dx) * speed if abs(dx) > 4 else 0.0
-
-		# skok, když je hráč výš nebo narazí do zdi
-		jump_cd -= delta
-		var player_above = player.global_position.y < global_position.y - 80
-		if is_on_floor() and jump_cd <= 0 and (player_above or is_on_wall()):
-			velocity.y = JUMP
-			jump_cd = randf_range(0.8, 1.6)
-
+		var dx = player.global_position.x + target_offset - global_position.x
+		var dy = player.global_position.y - global_position.y
+		if abs(dx) > 6:
+			desired_x = sign(dx) * speed
+			
+		if is_on_floor():
+			#hráč pod, spadni skrz
+			if dy > 60:
+				drop_timer = DROP_TIME
+			#hráč nad nebo ve zdi -> svarta
+			elif jump_cd <= 0 and (dy < -80 or is_on_wall()):
+				velocity.y = JUMP
+				jump_cd = randf_range(0.8, 1.6)
+				
+	desired_x += separation() * speed * SEPARATION_FORCE
+	velocity.x = move_toward(velocity.x, desired_x, accel * delta)
+	
 	move_and_slide()
-
-	# dotyk s hráčem
+	
+	#sexy touch
 	for b in hitbox.get_overlapping_bodies():
 		if b.has_method("hit"):
 			b.hit(contact_heat, global_position.x)
+			
+func separation():
+	var push := 0.0
+	for other in get_tree().get_nodes_in_group("enemies"):
+		if other == self:
+			continue
+		var d = global_position - other.global_position
+		if abs(d.x) < SEPARATION_DIST and abs(d.y) < 30:
+			var side = sign(d.x)
+			if side == 0:
+				side = 1 if get_instance_id() > other.get_instance_id() else -1
+			push += side * (1.0 - abs(d.x) / SEPARATION_DIST)
+	return clamp(push, -1.0, 1.0)
 
 
 func take_damage(amount):

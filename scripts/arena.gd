@@ -3,6 +3,7 @@ extends Node2D
 const ENEMY_SCENE = preload("res://scenes/enemy.tscn")
 const PICKUP_SCENE = preload("res://scenes/pickup.tscn")
 const Pickup = preload("res://scripts/pickup.gd")
+const Upgrades = preload("res://scripts/upgrades.gd")
 const SPAWN_INTERVAL = 0.8
 const DROP_CHANCE = 0.25
 
@@ -13,6 +14,7 @@ const DROP_CHANCE = 0.25
 @onready var wave_label = $HUD/WaveLabel
 @onready var buff_label = $HUD/BuffLabel
 @onready var spawn_points = $SpawnPoints
+@onready var upgrade_screen = $UpgradeScreen
 
 var score := 0
 var wave := 0
@@ -27,6 +29,7 @@ func _ready():
 	player.crashed.connect(func(): show_status("SYSTEM CRASH - REBOOTING..."))
 	player.rebooted.connect(func(): show_status(""))
 	player.died.connect(_on_player_died)
+	upgrade_screen.chosen.connect(_on_upgrade_chosen)
 	start_next_wave()
 
 
@@ -80,8 +83,23 @@ func _on_enemy_died(pos):
 	if randf() < DROP_CHANCE:
 		spawn_pickup(pos)
 	if to_spawn == 0 and alive == 0 and not game_over:
-		show_status("WAVE CLEAR!", 2.0)
-		get_tree().create_timer(2.0).timeout.connect(start_next_wave)
+		show_status("WAVE CLEAR!", 1.0)
+		get_tree().create_timer(1.0).timeout.connect(_offer_upgrades)
+
+
+func _offer_upgrades():
+	if game_over:
+		return
+	var choices = Upgrades.pick(player.upgrades, 3)
+	if choices.is_empty():
+		start_next_wave()           # všechno už na maximu
+		return
+	upgrade_screen.open(choices, player.upgrades)
+
+
+func _on_upgrade_chosen(id):
+	player.apply_upgrade(id)
+	start_next_wave()
 
 
 func _on_player_died():
