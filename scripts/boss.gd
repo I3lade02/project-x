@@ -53,8 +53,10 @@ func behave(delta):
 			Juice.play("charge", -4.0, 0.0)
 
 	# rozpálená aura
-	if phase >= 3 and iso_dist(player.global_position, global_position) < AURA_RADIUS:
-		player.add_heat(AURA_HEAT * delta)
+	if phase >= 3:
+		for p in get_tree().get_nodes_in_group("player"):
+			if not p.dead and iso_dist(p.global_position, global_position) < AURA_RADIUS:
+				p.add_heat(AURA_HEAT * delta)
 	aura.visible = phase >= 3
 	aura.modulate.a = 0.6 + 0.4 * sin(t * 6.0)
 

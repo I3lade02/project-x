@@ -3,19 +3,22 @@ extends Node
 const PATH = "user://settings.cfg"
 
 # akce, které jde přebindovat : český název v menu
+# (pořadí P1 / P2 se střídá -> v nastavení vzniknou dva sloupce)
 const REBINDABLE = {
-	"move_up": "Nahoru",
-	"move_down": "Dolů",
-	"move_left": "Doleva",
-	"move_right": "Doprava",
-	"shoot": "Střelba",
-	"dash": "Dash",
-	"vent": "Vent",
-	"overclock": "Overclock",
-	"interact": "Terminál (interakce)",
+	"move_up": "Nahoru", "p2_move_up": "P2 Nahoru",
+	"move_down": "Dolů", "p2_move_down": "P2 Dolů",
+	"move_left": "Doleva", "p2_move_left": "P2 Doleva",
+	"move_right": "Doprava", "p2_move_right": "P2 Doprava",
+	"shoot": "Střelba", "p2_shoot": "P2 Střelba",
+	"dash": "Dash", "p2_dash": "P2 Dash",
+	"vent": "Vent", "p2_vent": "P2 Vent",
+	"overclock": "Overclock", "p2_overclock": "P2 Overclock",
+	"interact": "Terminál", "p2_interact": "P2 Terminál",
 }
 
 var master_volume := 1.0
+var coop := false               # 2 hráči na jedné klávesnici (nastaví hlavní menu, neukládá se)
+var _stripped := {}             # P1 klávesy dočasně odebrané kvůli hráči 2
 var glow := 0.5                 # intenzita záře (WorldEnvironment glow)
 
 
@@ -57,9 +60,9 @@ func save_settings():
 	var cfg = ConfigFile.new()
 	for action in REBINDABLE:
 		var list = []
-		for ev in InputMap.action_get_events(action):
+		for ev in InputMap.action_get_events(action) + _stripped.get(action, []):
 			var s = event_to_string(ev)
-			if s != "":
+			if s != "" and not s in list:
 				list.append(s)
 		cfg.set_value("input", action, list)
 	cfg.set_value("audio", "master", master_volume)
@@ -125,3 +128,34 @@ func event_label(ev):
 			MOUSE_BUTTON_MIDDLE: return "Kolečko"
 		return "Myš %d" % ev.button_index
 	return ev.as_text()
+
+
+# --- co-op na jedné klávesnici ---
+# P1 dočasně přijde o klávesy, které používá hráč 2 (šipky, J, K...)
+func apply_coop_bindings():
+	_stripped = {}
+	var p2_keys := {}
+	for a in REBINDABLE:
+		if a.begins_with("p2_"):
+			for ev in InputMap.action_get_events(a):
+				p2_keys[event_to_string(ev)] = true
+	for a in REBINDABLE:
+		if a.begins_with("p2_"):
+			continue
+		for ev in InputMap.action_get_events(a):
+			if p2_keys.has(event_to_string(ev)):
+				InputMap.action_erase_event(a, ev)
+				if not _stripped.has(a):
+					_stripped[a] = []
+				_stripped[a].append(ev)
+
+
+func restore_bindings():
+	_stripped = {}
+	InputMap.load_from_project_settings()
+	load_settings()
+
+
+# hrají dva (co-op na jedné klávesnici nebo po síti)
+func two_players() -> bool:
+	return coop or Net.is_online()

@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player_hud.gd" id="1"]
+
+[node name="PlayerHud" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 620.0
+offset_bottom = 80.0
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="HeatBar" type="ProgressBar" parent="."]
+offset_right = 300.0
+offset_bottom = 24.0
+mouse_filter = 2
+show_percentage = false
+
+[node name="RedlineMark" type="ColorRect" parent="HeatBar"]
+offset_left = 239.0
+offset_top = -4.0
+offset_right = 241.0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(3, 0.3, 0.2, 1)
+
+[node name="HeatLabel" type="Label" parent="."]
+offset_left = 310.0
+offset_right = 430.0
+offset_bottom = 24.0
+text = "HEAT"
+
+[node name="Chips" type="Label" parent="."]
+offset_left = 430.0
+offset_right = 600.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(1.9, 1.5, 0.45, 1)
+text = "ČIPY  0"
+
+[node name="HeatInfo" type="Label" parent="."]
+offset_top = 28.0
+offset_right = 620.0
+offset_bottom = 52.0
+theme_override_font_sizes/font_size = 16
+text = "OC -"
+
+[node name="Buffs" type="Label" parent="."]
+offset_top = 54.0
+offset_right = 620.0
+offset_bottom = 78.0
+theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)

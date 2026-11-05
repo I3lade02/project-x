@@ -18,7 +18,7 @@ func _ready():
 		l.text = GameSettings.REBINDABLE[action]
 		grid.add_child(l)
 		var b = Button.new()
-		b.custom_minimum_size = Vector2(200, 0)
+		b.custom_minimum_size = Vector2(150, 0)
 		b.pressed.connect(_on_bind_pressed.bind(action))
 		grid.add_child(b)
 		buttons[action] = b
