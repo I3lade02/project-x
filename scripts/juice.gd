@@ -48,7 +48,14 @@ func _ready():
 
 
 # přehraje zvuk (s lehce náhodnou výškou, ať to neotravuje)
+# v síťové hře hostitel efekt pošle i druhému hráči
 func play(sound_name, volume_db := 0.0, pitch_var := 0.1):
+	if Net.is_host():
+		Net.fx_play.rpc(sound_name, volume_db, pitch_var)
+	play_local(sound_name, volume_db, pitch_var)
+
+
+func play_local(sound_name, volume_db := 0.0, pitch_var := 0.1):
 	if not SOUNDS.has(sound_name):
 		return
 	var p = players[next]
@@ -61,11 +68,23 @@ func play(sound_name, volume_db := 0.0, pitch_var := 0.1):
 
 # třes kamery (0.0 až 1.0)
 func shake(amount):
+	if Net.is_host():
+		Net.fx_shake.rpc(amount)
+	shake_local(amount)
+
+
+func shake_local(amount):
 	get_tree().call_group("camera", "shake", amount)
 
 
 # krátké "zamrznutí" hry pro pocit síly zásahu
 func hitstop(duration):
+	if Net.is_host():
+		Net.fx_hitstop.rpc(duration)
+	hitstop_local(duration)
+
+
+func hitstop_local(duration):
 	hitstop_count += 1
 	Engine.time_scale = 0.05
 	await get_tree().create_timer(duration, true, false, true).timeout
@@ -77,6 +96,12 @@ func hitstop(duration):
 
 # výbuch částic na pozici
 func burst(pos, color, amount := 14):
+	if Net.is_host():
+		Net.fx_burst.rpc(pos, color, amount)
+	burst_local(pos, color, amount)
+
+
+func burst_local(pos, color, amount := 14):
 	var scene = get_tree().current_scene
 	if scene == null:
 		return

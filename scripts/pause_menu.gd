@@ -15,12 +15,16 @@ const Upgrades = preload("res://scripts/upgrades.gd")
 
 func _ready():
 	root.hide()
+	root.add_to_group("ui_modal")
 	settings.hide()
+	restart_btn.visible = not Net.is_client()     # v LAN restartuje jen hostitel
 	continue_btn.pressed.connect(resume)
 	restart_btn.pressed.connect(_restart)
 	settings_btn.pressed.connect(_open_settings)
 	main_menu_btn.pressed.connect(_to_main_menu)
-	desktop_btn.pressed.connect(func(): get_tree().quit())
+	desktop_btn.pressed.connect(func():
+		Net.leave()
+		get_tree().quit())
 	settings.closed.connect(func():
 		root.show()
 		settings_btn.grab_focus())
@@ -38,26 +42,32 @@ func _unhandled_input(event):
 
 
 func pause():
-	get_tree().paused = true
+	if not Net.is_online():          # po síti se hra nezastavuje
+		get_tree().paused = true
 	refresh_build()
 	root.show()
 	continue_btn.grab_focus()
 
 
 func resume():
-	get_tree().paused = false
+	if not Net.is_online():
+		get_tree().paused = false
 	root.hide()
 
 
 # přehled upgradů a corruptů hráče
 func refresh_build():
-	var player = get_tree().get_first_node_in_group("player")
-	if player == null:
+	var players = get_tree().get_nodes_in_group("player")
+	if players.is_empty():
 		build_text.text = ""
 		return
-	var txt = _build_section("UPGRADY", "#60ff80", player.upgrades, Upgrades.LIST)
-	txt += "\n"
-	txt += _build_section("CORRUPTY", "#ff5050", player.corrupts, Upgrades.CORRUPTS)
+	var txt = ""
+	for player in players:
+		if players.size() > 1:
+			txt += "[b][font_size=20]HRÁČ %d[/font_size][/b]\n" % (player.get("player_index") + 1)
+		txt += _build_section("UPGRADY", "#60ff80", player.upgrades, Upgrades.LIST)
+		txt += _build_section("CORRUPTY", "#ff5050", player.corrupts, Upgrades.CORRUPTS)
+		txt += "\n"
 	build_text.text = txt
 
 
@@ -74,6 +84,9 @@ func _build_section(title, color, owned: Dictionary, data: Dictionary):
 
 func _restart():
 	get_tree().paused = false
+	var arena = get_tree().current_scene
+	if Net.is_host() and arena.get("net_sync"):
+		arena.net_sync.send_restart()
 	get_tree().reload_current_scene()
 
 
@@ -84,4 +97,5 @@ func _open_settings():
 
 func _to_main_menu():
 	get_tree().paused = false
+	Net.leave()
 	get_tree().change_scene_to_file(MAIN_MENU)

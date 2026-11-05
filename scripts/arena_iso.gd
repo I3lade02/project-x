@@ -16,19 +16,24 @@ const PLATE_SCENE = preload("res://scenes/hot_plate_iso.tscn")
 const FAN_SCENE = preload("res://scenes/fan_iso.tscn")
 const CHIP_SCENE = preload("res://scenes/chip.tscn")
 const TERMINAL_SCENE = preload("res://scenes/terminal.tscn")
+const PLAYER_SCENE = preload("res://scenes/player_iso.tscn")
 const Pickup = preload("res://scripts/pickup.gd")
 const Upgrades = preload("res://scripts/upgrades.gd")
 const Gen = preload("res://scripts/arena_gen.gd")
 const Edges = preload("res://scripts/arena_edges.gd")
+const NetSync = preload("res://scripts/net_sync.gd")
 
 const ORIGIN = Vector2(640, 72)      # roh dlaždice (0, 0) na obrazovce
-const SPAWN_INTERVAL = 0.8
+const SPAWN_INTERVAL = 0.75
 const CORRIDOR_LEN = Vector2i(4, 6)
-const SIZE_RANGE = Vector2i(12, 17)
-const BOSS_SIZE = Vector2i(18, 18)
+const SIZE_RANGE = Vector2i(20, 26)     # velikost sektoru v dlaždicích (min, max)
+const FIRST_SIZE = Vector2i(22, 25)
+const BOSS_SIZE = Vector2i(26, 26)
 const VOID_LAYER = 32                # kolizní vrstva 6 = okraj sektoru / díry
 const CHIPS = {"bug": 1, "drone": 1, "turret": 3, "tank": 4, "boss": 25}
 const REROLL_BASE = 3
+const COOP_ENEMY_MULT = 1.5          # v co-opu víc nepřátel
+const COOP_BOSS_HP = 1.6
 const THEMES = [
 	{"name": "CPU", "floor": Color(1.0, 1.1, 1.4), "edge": Color(0.3, 1.1, 1.6), "block_edge": Color(0.25, 0.9, 1.25)},
 	{"name": "GPU", "floor": Color(0.9, 1.3, 1.0), "edge": Color(0.35, 1.5, 0.55), "block_edge": Color(0.3, 1.2, 0.45)},
@@ -38,21 +43,18 @@ const THEMES = [
 ]
 
 @onready var world = $World
-@onready var player = $World/Player
+@onready var player = $World/Player       # hráč 1
 @onready var arenas = $Arenas
 @onready var floor_template = $Floor
 @onready var camera = $Camera
-@onready var heat_bar = $HUD/HeatBar
 @onready var status = $HUD/StatusLabel
 @onready var score_label = $HUD/ScoreLabel
 @onready var wave_label = $HUD/WaveLabel
-@onready var buff_label = $HUD/BuffLabel
-@onready var heat_info = $HUD/HeatInfo
-@onready var redline_mark = $HUD/HeatBar/RedlineMark
 @onready var upgrade_screen = $UpgradeScreen
 @onready var boss_label = $HUD/BossLabel
 @onready var boss_bar = $HUD/BossBar
-@onready var chips_label = $HUD/ChipsLabel
+@onready var p1_hud = $HUD/P1Hud
+@onready var p2_hud = $HUD/P2Hud
 @onready var shop = $ShopScreen
 
 var score := 0
@@ -68,33 +70,195 @@ var current := {}                 # aktuální sektor (data + uzly)
 var next_arena := {}              # sektor za otevřenou chodbou
 var corridor := {}
 var transition := false
+var exit_target = null            # kam ukazuje šipka na okraji obrazovky (chodba / terminál)
+var players := []                 # všichni hráči (1 nebo 2)
+var local_player                  # hráč na tomto počítači (kvůli kameře, HUD a míření)
+var net_sync = null               # synchronizace po síti (jen v LAN)
+var choosing := []                # kdo ještě vybírá upgrade po vlně
 
 
 func _ready():
 	floor_template.hide()
-	player.heat_changed.connect(_on_heat_changed)
-	player.crashed.connect(func(): show_status("SYSTEM CRASH - REBOOTING..."))
-	player.rebooted.connect(func():
-		show_status("")
-		Juice.play("reboot", -4.0, 0.0))
-	player.died.connect(_on_player_died)
+	players = [player]
+	local_player = player
+	if GameSettings.coop and not Net.is_online():
+		GameSettings.apply_coop_bindings()
+	if GameSettings.coop or Net.is_online():
+		var p2 = PLAYER_SCENE.instantiate()
+		p2.player_index = 1
+		p2.name = "Player2"
+		p2.remote_input = Net.is_host()
+		world.add_child(p2)
+		players.append(p2)
+	if Net.is_online():
+		net_sync = NetSync.new()
+		net_sync.name = "NetSync"
+		add_child(net_sync)
+	if Net.is_client():
+		_setup_client()
+		return
+	if Net.is_host():
+		Net.peer_left.connect(_on_peer_left)
+	for p in players:
+		p.heat_changed.connect(func(_v): update_score())
+		p.crashed.connect(func(): show_status(tag(p) + "SYSTEM CRASH - REBOOTING..."))
+		p.rebooted.connect(func():
+			show_status("")
+			Juice.play("reboot", -4.0, 0.0))
+		p.died.connect(_on_player_died.bind(p))
+	p1_hud.player = player
+	if players.size() > 1:
+		p2_hud.player = players[1]
+		p2_hud.show()
 	upgrade_screen.chosen.connect(_on_upgrade_chosen)
 	upgrade_screen.reroll.connect(_on_reroll)
 
 	# první sektor
-	var size = Vector2i(randi_range(14, 17), randi_range(14, 17))
+	var size = Vector2i(randi_range(FIRST_SIZE.x, FIRST_SIZE.y), randi_range(FIRST_SIZE.x, FIRST_SIZE.y))
 	var lay = Gen.generate(Vector2i.ZERO, size, {}, false)
 	current = build_arena(lay, pick_theme())
-	player.global_position = tile_point(lay["start"])
-	camera.target = player
+	place_players(tile_point(lay["start"]))
+	camera.targets = players if not Net.is_online() else [local_player]
 	camera.snap()
 	start_next_wave()
 
 
+# ============================================================
+#  Síť – klient (jen zobrazuje, simulace běží u hostitele)
+# ============================================================
+
+func _setup_client():
+	local_player = players[1]
+	for p in players:
+		p.puppet = true
+		p.set_physics_process(false)
+		p.collision_layer = 0
+		p.collision_mask = 0
+	p1_hud.player = local_player
+	p2_hud.player = players[0]
+	p2_hud.show()
+	camera.targets = [local_player]
+	upgrade_screen.chosen.connect(func(u, c): net_sync.send_choice(u, c))
+	upgrade_screen.reroll.connect(func(): net_sync.send_reroll())
+	Net.server_left.connect(func():
+		Net.last_message = "Hostitel ukončil hru."
+		get_tree().paused = false
+		get_tree().change_scene_to_file(Net.MENU_SCENE))
+	show_status("PŘIPOJUJI SE K HOSTITELI…")
+
+
+func client_init(lay: Dictionary, theme: Dictionary, name: String, sec: int):
+	for k in ["current", "next_arena", "corridor"]:
+		var rt = get(k)
+		if not rt.is_empty():
+			dissolve([rt["root"]] + rt.get("objects", []))
+	current = build_arena(lay, theme, name)
+	next_arena = {}
+	corridor = {}
+	sector = sec
+	place_players(tile_point(lay["start"]))
+	camera.snap()
+
+
+func client_open(ex: Dictionary, lay2: Dictionary, theme: Dictionary, name: String):
+	var ctiles := {}
+	for t in ex["tiles"]:
+		ctiles[t] = true
+	next_arena = build_arena(lay2, theme, name)
+	set_borders(next_arena, ctiles)
+	set_borders(current, ctiles)
+	corridor = build_corridor(ex, current["layout"]["walk"], lay2["walk"])
+	for n in [next_arena["root"]] + next_arena["objects"]:
+		n.modulate.a = 0.0
+		n.create_tween().tween_property(n, "modulate:a", 1.0, 0.8)
+
+
+func client_close():
+	if next_arena.is_empty():
+		return
+	var old = current
+	current = next_arena
+	next_arena = {}
+	set_borders(current, {})
+	dissolve([old["root"]] + old["objects"])
+	if not corridor.is_empty():
+		dissolve([corridor["root"]])
+	corridor = {}
+	sector += 1
+
+
+func _on_peer_left():
+	if players.size() > 1:
+		var p2 = players[1]
+		players.erase(p2)
+		p2.queue_free()
+		p2_hud.hide()
+	show_status("HRÁČ 2 SE ODPOJIL", 3.0)
+
+
+func _exit_tree():
+	if GameSettings.coop:
+		GameSettings.restore_bindings()
+
+
+# "P1: " / "P2: " v co-opu, jinak nic
+func tag(p) -> String:
+	return "P%d: " % (p.player_index + 1) if players.size() > 1 else ""
+
+
+func alive_players() -> Array:
+	return players.filter(func(p): return not p.dead)
+
+
+# postaví hráče vedle sebe na daný bod
+func place_players(pos: Vector2):
+	for i in players.size():
+		var off = Vector2(-28, -8) if i == 0 else Vector2(28, 8)
+		if players.size() == 1:
+			off = Vector2.ZERO
+		players[i].global_position = pos + off
+		players[i].velocity = Vector2.ZERO
+
+
+# --- corrupty, které mění nepřátele, se v co-opu sčítají ---
+func team_mult() -> int:
+	var m = 1
+	for p in alive_players():
+		m = maxi(m, p.multiplier())
+	return m
+
+
+func enemy_hp_bonus() -> int:
+	var b = 0
+	for p in players:
+		b += p.enemy_hp_bonus
+	return b
+
+
+func enemy_speed_mult() -> float:
+	var m = 1.0
+	for p in players:
+		m += p.enemy_speed_mult - 1.0
+	return m
+
+
+func extra_enemies() -> int:
+	var n = 0
+	for p in players:
+		n += p.extra_enemies
+	return n
+
+
+func drop_mult() -> float:
+	var m = 1.0
+	for p in players:
+		m *= p.drop_mult
+	return m
+
+
 func _process(delta):
-	update_buffs()
-	chips_label.text = "ČIPY  %d" % player.chips
-	update_heat_info()
+	if Net.is_client():
+		return
 	if transition and not next_arena.is_empty():
 		check_enter_next()
 	if game_over or to_spawn <= 0:
@@ -106,7 +270,9 @@ func _process(delta):
 
 
 func _unhandled_input(event):
-	if game_over and event.is_action_pressed("restart"):
+	if game_over and event.is_action_pressed("restart") and not Net.is_client():
+		if net_sync:
+			net_sync.send_restart()
 		get_tree().reload_current_scene()
 
 
@@ -145,7 +311,7 @@ func pick_theme() -> Dictionary:
 	return t
 
 
-func build_arena(lay: Dictionary, theme: Dictionary) -> Dictionary:
+func build_arena(lay: Dictionary, theme: Dictionary, arena_name := "") -> Dictionary:
 	var root = Node2D.new()
 	arenas.add_child(root)
 	var fl = make_floor(lay["walk"].keys(), theme["floor"])
@@ -154,7 +320,8 @@ func build_arena(lay: Dictionary, theme: Dictionary) -> Dictionary:
 	root.add_child(ed)
 	var rt = {
 		"layout": lay, "theme": theme, "root": root, "edges": ed, "void": null, "objects": [],
-		"name": "%s-%02X" % [theme["name"], randi() % 256],
+		"name": arena_name if arena_name != "" else "%s-%02X" % [theme["name"], randi() % 256],
+		"plates": [],
 	}
 	set_borders(rt, {})
 	for p in lay["plates"]:
@@ -162,6 +329,7 @@ func build_arena(lay: Dictionary, theme: Dictionary) -> Dictionary:
 		hp.position = tile_point(p)
 		hp.start_offset = randf() * 6.0
 		root.add_child(hp)
+		rt["plates"].append(hp)
 	for f in lay["fans"]:
 		var fan = FAN_SCENE.instantiate()
 		fan.position = tile_point(f)
@@ -256,6 +424,9 @@ func open_exit():
 	set_borders(current, ctiles)
 	corridor = build_corridor(ex, lay["walk"], lay2["walk"])
 	spawn_terminal(ex)
+	if net_sync:
+		net_sync.send_sector_open(ex, lay2, next_arena["theme"], next_arena["name"])
+	exit_target = tile_point(lay2["start"])
 
 	# nový sektor se plynule objeví
 	for n in [next_arena["root"]] + next_arena["objects"]:
@@ -305,22 +476,38 @@ func build_corridor(ex: Dictionary, walk_a: Dictionary, walk_b: Dictionary) -> D
 
 # hráč došel do nového sektoru?
 func check_enter_next():
-	var c = screen_to_cell(player.global_position)
 	var lay = next_arena["layout"]
-	if not lay["walk"].has(c):
-		return
 	var e = lay["entry"]
 	var edge = lay["origin"][e["axis"]] + (lay["size"][e["axis"]] - 1 if e["sign"] > 0 else 0)
-	if absi(c[e["axis"]] - edge) >= 2:
-		close_transition()
+	for p in alive_players():
+		var c = screen_to_cell(p.global_position)
+		if lay["walk"].has(c) and absi(c[e["axis"]] - edge) >= 2:
+			close_transition()
+			return
 
 
 func close_transition():
 	transition = false
+	exit_target = null
 	var old = current
 	current = next_arena
 	next_arena = {}
 	set_borders(current, {})          # zavře vstup za hráčem
+	if net_sync:
+		net_sync.send_sector_close()
+	# co-op: kdo zůstal pozadu, přesune se; mrtvý hráč se vrátí do hry
+	var start = tile_point(current["layout"]["start"])
+	var k = 0
+	for p in players:
+		var off = Vector2(-28 + 56 * k, -8 + 16 * k)
+		if p.dead:
+			p.revive(start + off)
+			show_status(tag(p) + "ZPĚT ONLINE", 2.0)
+		elif not current["layout"]["walk"].has(screen_to_cell(p.global_position)):
+			p.global_position = start + off
+			p.velocity = Vector2.ZERO
+			Juice.burst(p.global_position + Vector2(0, -20), Color(0.6, 1.8, 2.2), 16)
+		k += 1
 	dissolve([old["root"]] + old["objects"])
 	dissolve([corridor["root"]])
 	corridor = {}
@@ -382,8 +569,12 @@ func spawn_terminal(ex: Dictionary):
 	term.position = cell_center(best)
 	world.add_child(term)
 	current["objects"].append(term)
-	shop.setup(player, sector)
-	term.opened.connect(func(): shop.open())
+	shop.reset(sector)
+	term.opened.connect(func(p):
+		if p.remote_input:
+			net_sync.send_shop(shop.remote_data(p))
+		else:
+			shop.open_for(p))
 	show_status("CESTA DO SEKTORU %d OTEVŘENA  ·  TERMINÁL [E]" % (sector + 1), 3.0)
 
 
@@ -406,9 +597,10 @@ func start_next_wave():
 		spawn_timer = 2.0
 	else:
 		show_status("WAVE %d" % wave, 1.5)
-	if player.start_nitro > 0:            # z obchodu: start s dusíkem
-		player.start_nitro -= 1
-		player.nitro_timer = 6.0
+	for p in players:
+		if p.start_nitro > 0:             # z obchodu: start s dusíkem
+			p.start_nitro -= 1
+			p.nitro_timer = 6.0
 
 
 # složení vlny: postupně přibývají drony, turrety a tanky, každá 5. vlna je boss
@@ -419,7 +611,9 @@ func build_wave(w: int) -> Array:
 		for i in floori(w / 5.0):
 			q.append("drone")
 		return q
-	var n = 3 + w * 2 + player.extra_enemies
+	var n = 5 + w * 2 + extra_enemies()
+	if players.size() > 1:
+		n = roundi(n * COOP_ENEMY_MULT)
 	var turrets = 0 if w < 3 else mini(1 + floori((w - 3) / 3.0), 3)
 	var tanks = 0 if w < 4 else mini(1 + floori((w - 4) / 3.0), 4)
 	var drones = 0 if w < 2 else floori(n * 0.25)
@@ -447,9 +641,11 @@ func spawn_enemy():
 func add_enemy(kind: String, pos: Vector2):
 	var e = KINDS[kind].instantiate()
 	e.global_position = pos
-	e.speed = (110.0 + wave * 12.0) * player.enemy_speed_mult
+	e.speed = (110.0 + wave * 12.0) * enemy_speed_mult()
 	if kind == "boss":
-		e.hp = 150 + 70 * (floori(wave / 5.0) - 1) + player.enemy_hp_bonus * 10
+		e.hp = 150 + 70 * (floori(wave / 5.0) - 1) + enemy_hp_bonus() * 10
+		if players.size() > 1:
+			e.hp = roundi(e.hp * COOP_BOSS_HP)
 		e.summon.connect(func(k, p):
 			# přivolaný bug se nesmí objevit mimo sektor
 			if not current["layout"]["walk"].has(screen_to_cell(p)):
@@ -460,7 +656,7 @@ func add_enemy(kind: String, pos: Vector2):
 		boss_label.show()
 		boss_bar.show()
 	else:
-		e.hp += player.enemy_hp_bonus
+		e.hp += enemy_hp_bonus()
 	if kind == "turret":
 		e.burst = 1 + floori(wave / 6.0)
 	e.died.connect(_on_enemy_died.bind(kind))
@@ -478,7 +674,11 @@ func find_free_spot() -> Vector2:
 	var free: Array = current["layout"]["free"]
 	for attempt in 40:
 		var p = cell_center(free.pick_random())
-		if Vector2(p.x - player.global_position.x, (p.y - player.global_position.y) * 2.0).length() >= 220.0:
+		var ok = true
+		for pl in players:
+			if Vector2(p.x - pl.global_position.x, (p.y - pl.global_position.y) * 2.0).length() < 220.0:
+				ok = false
+		if ok:
 			return p
 	return cell_center(current["layout"]["spawns"].pick_random())
 
@@ -495,12 +695,12 @@ func spawn_pickup(pos):
 
 func _on_enemy_died(pos, value, drops, kind):
 	alive -= 1
-	score += value * player.multiplier()
+	score += value * team_mult()
 	update_score()
 	if drops >= 1.0:
-		for i in int(drops):
+		for i in int(drops) * players.size():
 			spawn_pickup(pos + Vector2(randf_range(-40, 40), randf_range(-20, 20)))
-	elif randf() < drops * player.drop_mult:
+	elif randf() < drops * drop_mult():
 		spawn_pickup(pos)
 	spawn_chips(pos, CHIPS[kind])
 	if kind == "boss":
@@ -517,98 +717,106 @@ func _on_enemy_died(pos, value, drops, kind):
 func _offer_upgrades():
 	if game_over:
 		return
-	var choices = Upgrades.pick(player.upgrades, 3)
-	if choices.is_empty():
-		open_exit()                 # všechno už na maximu
+	choosing = players.duplicate()     # v co-opu vybírá každý svou kartu
+	next_chooser()
+
+
+# další hráč na řadě s výběrem karty (nebo otevřít cestu dál)
+func next_chooser():
+	while not choosing.is_empty():
+		var p = choosing[0]
+		var choices = Upgrades.pick(p.upgrades, 3)
+		if choices.is_empty():
+			choosing.pop_front()        # všechno už na maximu
+			continue
+		upgrade_screen.reroll_cost = REROLL_BASE
+		show_cards(choices)
 		return
-	upgrade_screen.reroll_cost = REROLL_BASE
-	show_cards(choices)
+	open_exit()
 
 
 func show_cards(choices: Array):
+	var p = choosing[0]
 	var corrupts = []
 	for id in choices:
-		corrupts.append(Upgrades.pick_corrupt(id, player.corrupts))
-	upgrade_screen.open(choices, corrupts, player.upgrades, player.corrupts)
+		corrupts.append(Upgrades.pick_corrupt(id, p.corrupts))
+	var title = ""
+	if players.size() > 1:
+		title = "HRÁČ %d – vyber upgrade (pozor na corrupt!)" % (p.player_index + 1)
+	if p.remote_input:
+		# hráč 2 vybírá na svém počítači, hostitel čeká
+		net_sync.send_cards(choices, corrupts, title, upgrade_screen.reroll_cost)
+		get_tree().paused = true
+		show_status("HRÁČ 2 VYBÍRÁ UPGRADE…")
+		return
+	if Net.is_host():
+		show_status("HRÁČ 1 VYBÍRÁ UPGRADE…")
+	upgrade_screen.open(choices, corrupts, p.upgrades, p.corrupts, p, title)
+
+
+# (host) volby hráče 2 ze sítě
+func remote_choice(upgrade_id: String, corrupt_id: String):
+	if choosing.is_empty() or not choosing[0].remote_input:
+		return
+	get_tree().paused = false
+	show_status("")
+	_on_upgrade_chosen(upgrade_id, corrupt_id)
+
+
+func remote_reroll():
+	if not choosing.is_empty() and choosing[0].remote_input:
+		_on_reroll()
+
+
+func remote_buy(id: String):
+	if players.size() < 2:
+		return
+	var p = players[1]
+	var msg = shop.purchase(p, id)
+	if msg != "":
+		Juice.play("buy", -2.0, 0.0)
+	net_sync.send_shop(shop.remote_data(p, msg))
 
 
 # reroll karet za čipy (každý další dražší)
 func _on_reroll():
-	if player.chips < upgrade_screen.reroll_cost:
+	var p = choosing[0]
+	if p.chips < upgrade_screen.reroll_cost:
 		Juice.play("jam", -4.0)
 		return
-	player.chips -= upgrade_screen.reroll_cost
+	p.chips -= upgrade_screen.reroll_cost
 	upgrade_screen.reroll_cost += 2
 	Juice.play("buy", -4.0, 0.0)
-	show_cards(Upgrades.pick(player.upgrades, 3))
+	show_cards(Upgrades.pick(p.upgrades, 3))
 
 
 func _on_upgrade_chosen(upgrade_id, corrupt_id):
 	Juice.play("upgrade", -2.0, 0.0)
-	player.apply_upgrade(upgrade_id)
-	player.apply_corrupt(corrupt_id)
-	open_exit()
+	var p = choosing.pop_front()
+	p.apply_upgrade(upgrade_id)
+	p.apply_corrupt(corrupt_id)
+	next_chooser()
 
 
-func _on_player_died():
+func _on_player_died(p):
+	if not alive_players().is_empty():
+		show_status(tag(p) + "OFFLINE – vrátí se v dalším sektoru", 3.0)
+		Juice.play("crash", -4.0)
+		return
 	game_over = true
 	Juice.play("game_over", 0.0, 0.0)
 	Juice.shake(1.0)
 	Juice.hitstop(0.3)
-	status.text = "GAME OVER\nScore: %d   ·   Sektor %d\nR = restart" % [score, sector]
+	var hint = "R = restart (hostitel)" if Net.is_online() else "R = restart"
+	status.text = "GAME OVER\nScore: %d   ·   Sektor %d\n%s" % [score, sector, hint]
 
 
 # ============================================================
 #  HUD
 # ============================================================
 
-func _on_heat_changed(value):
-	heat_bar.value = value
-	heat_bar.modulate = Color.WHITE.lerp(Color.RED, value / 100.0)
-	update_score()
-
-
 func update_score():
-	score_label.text = "SCORE: %d   x%d" % [score, player.multiplier()]
-
-
-func update_buffs():
-	var parts = []
-	if player.double_dash_timer > 0:
-		parts.append("DOUBLE DASH %d s" % ceil(player.double_dash_timer))
-	if player.nitro_timer > 0:
-		parts.append("NITRO %d s" % ceil(player.nitro_timer))
-	if player.shield > 0:
-		parts.append("ŠTÍT x%d" % player.shield)
-	if player.fuse > 0:
-		parts.append("POJISTKA")
-	buff_label.text = "   ".join(PackedStringArray(parts))
-
-
-const OC_NAMES = ["-", "I", "II", "III"]
-
-
-# řádek pod teplotou: úroveň overclocku, dash, vent, chlazení, REDLINE
-func update_heat_info():
-	var txt = "OC %s   DASH %d/%d" % [OC_NAMES[player.oc_level], player.dash_charges, player.max_dashes()]
-	if player.vent_cd > 0:
-		txt += "   VENT %.1f s" % player.vent_cd
-	elif player.heat >= player.VENT_MIN_HEAT:
-		txt += "   VENT PŘIPRAVEN [Q]"
-	else:
-		txt += "   VENT (min. 40 %)"
-	if player.in_fan_t > 0:
-		txt += "   CHLAZENÍ"
-	if player.in_redline():
-		txt += "   >> REDLINE <<"
-		var blink = int(Time.get_ticks_msec() / 120) % 2 == 0
-		heat_info.modulate = Color(3, 0.5, 0.3) if blink else Color(1.5, 0.8, 0.6)
-	elif player.in_fan_t > 0:
-		heat_info.modulate = Color(0.8, 2.0, 2.4)
-	else:
-		heat_info.modulate = Color(0.7, 1.2, 1.4)
-	heat_info.text = txt
-	redline_mark.position.x = heat_bar.size.x * player.redline_start / 100.0 - 1.0
+	score_label.text = "SCORE: %d   x%d" % [score, team_mult()]
 
 
 # zobrazí text, volitelně ho po čase zase smaže

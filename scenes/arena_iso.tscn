@@ -14,6 +14,8 @@
 [ext_resource type="Script" path="res://scripts/heat_fx.gd" id="13"]
 [ext_resource type="Script" path="res://scripts/crosshair.gd" id="14"]
 [ext_resource type="PackedScene" path="res://scenes/shop_screen.tscn" id="15"]
+[ext_resource type="Script" path="res://scripts/offscreen_indicators.gd" id="16"]
+[ext_resource type="PackedScene" path="res://scenes/player_hud.tscn" id="17"]
 
 [sub_resource type="TileSetAtlasSource" id="floor_src"]
 texture = ExtResource("9")
@@ -96,20 +98,6 @@ script = ExtResource("8")
 [node name="HUD" type="CanvasLayer" parent="."]
 layer = 2
 
-[node name="HeatBar" type="ProgressBar" parent="HUD"]
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 320.0
-offset_bottom = 44.0
-show_percentage = false
-
-[node name="HeatLabel" type="Label" parent="HUD"]
-offset_left = 330.0
-offset_top = 20.0
-offset_right = 430.0
-offset_bottom = 44.0
-text = "HEAT"
-
 [node name="StatusLabel" type="Label" parent="HUD"]
 offset_left = 290.0
 offset_top = 300.0
@@ -133,13 +121,6 @@ offset_right = 890.0
 offset_bottom = 44.0
 text = "WAVE 1"
 horizontal_alignment = 1
-
-[node name="BuffLabel" type="Label" parent="HUD"]
-offset_left = 20.0
-offset_top = 76.0
-offset_right = 620.0
-offset_bottom = 100.0
-theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
 
 [node name="Crosshair" type="Control" parent="HUD"]
 process_mode = 3
@@ -193,22 +174,6 @@ offset_bottom = 1.0
 mouse_filter = 2
 color = Color(0.5, 1, 1, 1)
 
-[node name="HeatInfo" type="Label" parent="HUD"]
-offset_left = 20.0
-offset_top = 48.0
-offset_right = 620.0
-offset_bottom = 72.0
-theme_override_font_sizes/font_size = 16
-text = "OC -   VENT OK"
-
-[node name="RedlineMark" type="ColorRect" parent="HUD/HeatBar"]
-offset_left = 239.0
-offset_top = -4.0
-offset_right = 241.0
-offset_bottom = 28.0
-mouse_filter = 2
-color = Color(3, 0.3, 0.2, 1)
-
 [node name="BossLabel" type="Label" parent="HUD"]
 visible = false
 offset_left = 440.0
@@ -231,14 +196,27 @@ offset_bottom = 90.0
 value = 100.0
 show_percentage = false
 
-[node name="ChipsLabel" type="Label" parent="HUD"]
-offset_left = 960.0
-offset_top = 48.0
-offset_right = 1260.0
-offset_bottom = 72.0
-theme_override_colors/font_color = Color(1.9, 1.5, 0.45, 1)
-text = "ČIPY  0"
-horizontal_alignment = 2
+[node name="P1Hud" parent="HUD" instance=ExtResource("17")]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 640.0
+offset_bottom = 100.0
+
+[node name="P2Hud" parent="HUD" instance=ExtResource("17")]
+visible = false
+offset_left = 20.0
+offset_top = 616.0
+offset_right = 640.0
+offset_bottom = 696.0
+
+[node name="Indicators" type="Control" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("16")
 
 [node name="ShopScreen" parent="." instance=ExtResource("15")]
 

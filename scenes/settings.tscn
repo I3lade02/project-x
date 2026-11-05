@@ -48,9 +48,9 @@ text = "Ovládání – klikni a stiskni novou klávesu (Esc = zrušit)"
 horizontal_alignment = 1
 
 [node name="Bindings" type="GridContainer" parent="Center/Panel/Margin/VBox"]
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 8
-columns = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 6
+columns = 4
 
 [node name="HSeparator" type="HSeparator" parent="Center/Panel/Margin/VBox"]
 

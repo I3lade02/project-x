@@ -21,8 +21,9 @@ func on_death():
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if e != self and iso_dist(e.global_position, global_position) < BLAST_RADIUS:
 			e.take_damage(BLAST_DAMAGE)
-	if player and not player.dead and iso_dist(player.global_position, global_position) < BLAST_RADIUS:
-		player.hit(BLAST_HEAT, global_position)
+	for p in get_tree().get_nodes_in_group("player"):
+		if not p.dead and iso_dist(p.global_position, global_position) < BLAST_RADIUS:
+			p.hit(BLAST_HEAT, global_position)
 	# rozpínající se elipsa
 	var ring = Polygon2D.new()
 	var pts = PackedVector2Array()

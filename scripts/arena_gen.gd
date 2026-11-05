@@ -4,7 +4,9 @@ extends RefCounted
 ## Souřadnice = dlaždice izo mřížky: osa 0 ("i") jde na obrazovce doprava dolů, osa 1 ("j") doleva dolů.
 
 const DIRS4 = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-const BLOCK_SIZES = [Vector2i(1, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 2), Vector2i(2, 2)]
+const BLOCK_SIZES = [Vector2i(1, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 2), Vector2i(2, 2),
+	Vector2i(3, 1), Vector2i(1, 3), Vector2i(3, 2), Vector2i(2, 3)]
+const BASE_AREA = 225.0       # plocha, pro kterou platí základní počty (15×15)
 const SHAPES = ["corners", "cross", "pit", "ragged", "ragged", "plain", "corners"]
 const BOSS_SHAPES = ["plain", "corners", "ragged"]
 
@@ -31,9 +33,11 @@ static func _try_generate(origin: Vector2i, size: Vector2i, entry: Dictionary, b
 	var shapes = BOSS_SHAPES if boss else SHAPES
 	for k in 1 + randi() % 2:
 		_apply_shape(walk, origin, size, shapes.pick_random())
+	var scale = (size.x * size.y) / BASE_AREA      # větší sektor = víc věcí
 	if not boss:
-		for k in randi() % 3:     # malé díry
-			_set_rect(walk, origin + Vector2i(randi_range(3, size.x - 5), randi_range(3, size.y - 5)), Vector2i(2, 2), false)
+		for k in randi_range(0, 2) + floori(scale):     # malé díry
+			var hs = Vector2i(randi_range(2, 3), randi_range(2, 3))
+			_set_rect(walk, origin + Vector2i(randi_range(3, size.x - 6), randi_range(3, size.y - 6)), hs, false)
 
 	# 2) vstup + "páteř" ke středu (zaručí, že sektor jde projít)
 	var pad := {}
@@ -72,8 +76,8 @@ static func _try_generate(origin: Vector2i, size: Vector2i, entry: Dictionary, b
 	# 3) bloky (kryt) – nikdy nesmí odříznout část sektoru
 	var occupied := {}
 	var blocks := []
-	var target = randi_range(2, 4) if boss else randi_range(5, 10)
-	for attempt in 90:
+	var target = mini(roundi((randi_range(2, 4) if boss else randi_range(5, 10)) * scale), 24)
+	for attempt in 60 + target * 12:
 		if blocks.size() >= target:
 			break
 		var bs: Vector2i = BLOCK_SIZES.pick_random()
@@ -93,9 +97,9 @@ static func _try_generate(origin: Vector2i, size: Vector2i, entry: Dictionary, b
 	var hazard := {}
 	var plates := []
 	var fans := []
-	var n_plates = randi_range(0, 2) if boss else randi_range(0, 3)
-	var n_fans = randi_range(1, 2) if boss else randi_range(0, 2)
-	for attempt in 60:
+	var n_plates = mini(roundi((randi_range(0, 2) if boss else randi_range(1, 3)) * scale), 5)
+	var n_fans = mini(roundi((randi_range(1, 2) if boss else randi_range(0, 2)) * scale), 4)
+	for attempt in 120:
 		if plates.size() >= n_plates:
 			break
 		var c: Vector2i = cells.pick_random()
@@ -104,7 +108,7 @@ static func _try_generate(origin: Vector2i, size: Vector2i, entry: Dictionary, b
 			for f in fp:
 				hazard[f] = true
 			plates.append(Vector2(c) + Vector2(1.5, 1.0))
-	for attempt in 60:
+	for attempt in 120:
 		if fans.size() >= n_fans:
 			break
 		var c: Vector2i = cells.pick_random()
@@ -121,16 +125,17 @@ static func _try_generate(origin: Vector2i, size: Vector2i, entry: Dictionary, b
 			free.append(c)
 	var cands := []
 	for c in free:
-		if Vector2(c).distance_to(start) >= 6.0 and _near_edge(c, walk):
+		if Vector2(c).distance_to(start) >= 8.0 and _near_edge(c, walk):
 			cands.append(c)
 	cands.shuffle()
 	var spawns := []
+	var max_spawns = 4 + roundi(scale * 2.0)
 	for c in cands:
-		if spawns.size() >= 5:
+		if spawns.size() >= max_spawns:
 			break
 		var ok := true
 		for s in spawns:
-			if Vector2(s).distance_to(Vector2(c)) < 4.0:
+			if Vector2(s).distance_to(Vector2(c)) < 5.0:
 				ok = false
 		if ok:
 			spawns.append(c)
@@ -200,7 +205,7 @@ static func _apply_shape(walk: Dictionary, origin: Vector2i, size: Vector2i, sha
 			for k in 4:
 				_cut_corner(walk, origin, size, k, Vector2i(floori(size.x / 3.0), floori(size.y / 3.0)))
 		"pit":
-			var ps = Vector2i(randi_range(2, 4), randi_range(2, 4))
+			var ps = Vector2i(randi_range(3, maxi(3, floori(size.x / 4.0))), randi_range(3, maxi(3, floori(size.y / 4.0))))
 			_set_rect(walk, origin + size / 2 - ps / 2, ps, false)
 		"ragged":
 			for p in 2:

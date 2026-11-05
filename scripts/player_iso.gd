@@ -47,6 +47,9 @@ const GHOST_INTERVAL = 0.025
 const GHOST_SHAPE = [Vector2(-19, -40), Vector2(0, -50), Vector2(19, -40), Vector2(19, 0), Vector2(0, 10), Vector2(-19, 0)]
 
 const GUN_POS = Vector2(0, -22)
+const AUTO_AIM_RANGE = 650.0  # P2 míří automaticky na nejbližšího nepřítele v tomto dosahu
+const LEASH = 900.0           # v co-opu se hráči nemůžou vzdálit víc (kamera)
+const P2_COLOR = Color(1.0, 0.78, 0.45)
 
 # bonusy
 const DOUBLE_DASH_TIME = 12.0
@@ -90,6 +93,18 @@ var extra_enemies := 0        # čte aréna
 var drop_mult := 1.0          # čte aréna
 var corrupts := {}            # id : počet
 
+# --- kdo hraje ---
+@export var player_index := 0  # 0 = hráč 1 (klávesnice + myš), 1 = hráč 2 (šipky, auto-míření)
+var prefix := ""               # předpona akcí ("" nebo "p2_")
+var auto_aim := false
+var base_color := Color.WHITE
+var remote_input := false      # (host) hráč 2 po síti – vstupy chodí v net_input
+var net_input := {"move": Vector2.ZERO, "aim": Vector2.RIGHT, "shoot": false, "overclock": false}
+var _net_presses := {}         # akce -> počet stisků, které ještě nebyly zpracované
+var puppet := false            # (klient) jen zobrazuje stav z hostitele
+var _net_pos := Vector2.ZERO
+var _net_max_dashes := 1
+
 # --- stav ---
 var heat := 0.0
 var cool_timer := 0.0
@@ -130,6 +145,78 @@ var in_fan_t := 0.0           # > 0 = stojí ve ventilátoru (nastavuje fan_iso.
 
 func _ready():
 	add_to_group("player")
+	if player_index == 1:
+		if not Net.is_online():          # co-op na jedné klávesnici
+			prefix = "p2_"
+			auto_aim = true
+		base_color = P2_COLOR
+		$Gun/Barrel.color = Color(1.0, 0.55, 0.2)
+	$Tag.text = "P%d" % (player_index + 1)
+	$Tag.visible = GameSettings.two_players()
+	$Tag.modulate = Color(0.5, 1.6, 2.0) if player_index == 0 else Color(2.0, 1.3, 0.5)
+
+
+# název akce pro tohoto hráče
+func act(action: String) -> String:
+	return prefix + action
+
+
+# otevřené menu (pauza, obchod, karty) -> lokální hráč nereaguje
+func _ui_blocked() -> bool:
+	for n in get_tree().get_nodes_in_group("ui_modal"):
+		if n.visible:
+			return true
+	return false
+
+
+func move_input() -> Vector2:
+	if remote_input:
+		return net_input["move"]
+	if _ui_blocked():
+		return Vector2.ZERO
+	return Input.get_vector(act("move_left"), act("move_right"), act("move_up"), act("move_down"))
+
+
+func inp_held(action: String) -> bool:
+	if remote_input:
+		return net_input.get(action, false)
+	if _ui_blocked():
+		return false
+	return Input.is_action_pressed(act(action))
+
+
+func inp_just(action: String) -> bool:
+	if remote_input:
+		if _net_presses.get(action, 0) > 0:
+			_net_presses[action] -= 1
+			return true
+		return false
+	if _ui_blocked():
+		return false
+	return Input.is_action_just_pressed(act(action))
+
+
+# (host) vstupy hráče 2 ze sítě; stisky chodí jako počítadla, aby se neztratily
+var _last_counts := {}
+func set_net_input(move: Vector2, aim: Vector2, shoot: bool, oc: bool, counts: Dictionary):
+	net_input["move"] = move.limit_length(1.0)
+	if aim.length() > 0.1:
+		net_input["aim"] = aim.normalized()
+	net_input["shoot"] = shoot
+	net_input["overclock"] = oc
+	for a in counts:
+		var diff = counts[a] - _last_counts.get(a, 0)
+		if diff > 0:
+			_net_presses[a] = _net_presses.get(a, 0) + diff
+		_last_counts[a] = counts[a]
+
+
+# druhý živý hráč (co-op), jinak null
+func partner():
+	for p in get_tree().get_nodes_in_group("player"):
+		if p != self and not p.dead:
+			return p
+	return null
 
 
 # vzdálenost v "herních" souřadnicích (osa Y se na obrazovce zmenšuje)
@@ -139,6 +226,8 @@ static func iso_dist(a: Vector2, b: Vector2) -> float:
 
 
 func max_dashes() -> int:
+	if puppet:
+		return _net_max_dashes
 	return 1 + extra_dashes + (1 if double_dash_timer > 0 else 0)
 
 
@@ -185,17 +274,17 @@ func _physics_process(delta):
 		dash_step(delta)
 		update_visual(delta)
 		return
-	if Input.is_action_just_pressed("dash") and dash_charges > 0 and dash_gap <= 0:
+	if inp_just("dash") and dash_charges > 0 and dash_gap <= 0:
 		start_dash()
 		if dash_timer > 0:
 			return
 
 	# --- vent ---
-	if Input.is_action_just_pressed("vent"):
+	if inp_just("vent"):
 		try_vent()
 
 	# --- overclock (úrovně) ---
-	overclock = Input.is_action_pressed("overclock")
+	overclock = inp_held("overclock")
 	if overclock:
 		oc_hold += delta
 		var lvl = min(1 + int(oc_hold / OC_LEVEL_TIME), OC_LEVELS.size())
@@ -209,14 +298,21 @@ func _physics_process(delta):
 
 	# --- pohyb (8 směrů) ---
 	var speed = SPEED * speed_mult * (OC_LEVELS[oc_level - 1]["speed"] if oc_level > 0 else 1.0)
-	var input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var input = move_input()
 	velocity = input * ISO * speed + knock
 	knock = knock.move_toward(Vector2.ZERO, 1800.0 * delta)
+	# co-op: hráči se nemůžou rozběhnout moc daleko od sebe
+	var other = partner() if not Net.is_online() else null
+	if other:
+		var d = global_position - other.global_position
+		if d.length() > LEASH and velocity.dot(d) > 0:
+			var n = d.normalized()
+			velocity -= n * velocity.dot(n)
 	move_and_slide()
 
 	# --- střelba ---
 	fire_cd -= delta
-	if Input.is_action_pressed("shoot") and fire_cd <= 0:
+	if inp_held("shoot") and fire_cd <= 0:
 		shoot()
 
 	# --- teplota ---
@@ -234,9 +330,27 @@ func _physics_process(delta):
 # --- míření myší ---
 func update_aim():
 	var origin = global_position + Vector2(0, -AIM_HEIGHT)
-	var to_mouse = get_global_mouse_position() - origin
-	if to_mouse.length() > 4.0:
-		aim_dir = to_mouse.normalized()
+	if remote_input:
+		aim_dir = net_input["aim"]
+	elif auto_aim:
+		# hráč 2: nejbližší nepřítel, jinak směr pohybu
+		var best = null
+		var best_d = AUTO_AIM_RANGE
+		for e in get_tree().get_nodes_in_group("enemies"):
+			var dd = iso_dist(e.global_position, global_position)
+			if dd < best_d:
+				best_d = dd
+				best = e
+		if best:
+			aim_dir = (best.global_position + Vector2(0, -16) - origin).normalized()
+		else:
+			var mi = move_input()
+			if mi.length() > 0.1:
+				aim_dir = (mi * ISO).normalized()
+	else:
+		var to_mouse = get_global_mouse_position() - origin
+		if to_mouse.length() > 4.0:
+			aim_dir = to_mouse.normalized()
 	facing = 1 if aim_dir.x >= 0 else -1
 	gun.rotation = aim_dir.angle()
 	gun.scale.y = facing
@@ -244,7 +358,7 @@ func update_aim():
 
 # --- dash ---
 func start_dash():
-	var input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var input = move_input()
 	if input.length() > 0.1:
 		dash_dir = (input * ISO).normalized()
 	else:
@@ -252,7 +366,7 @@ func start_dash():
 	dash_timer = DASH_TIME
 	dash_gap = DASH_TIME + DASH_GAP
 	dash_charges -= 1
-	dash_overclocked = Input.is_action_pressed("overclock")
+	dash_overclocked = inp_held("overclock")
 	dash_hits = []
 	ghost_timer = 0.0
 	invuln = max(invuln, DASH_TIME + 0.05)
@@ -483,6 +597,12 @@ func vent():
 
 # rozpínající se elipsa na zemi (vent / termální výbuch)
 func show_ring(radius, color):
+	if Net.is_host():
+		Net.fx_ring.rpc(player_index, radius, color)
+	show_ring_local(radius, color)
+
+
+func show_ring_local(radius, color):
 	blast_ring.color = color
 	blast_ring.visible = true
 	blast_ring.scale = Vector2(0.2, 0.2)
@@ -506,7 +626,7 @@ func update_visual(delta):
 	if nitro_timer > 0:
 		body.modulate = Color(0.7, 0.9, 1.0)                    # zmrzlý od dusíku
 	else:
-		body.modulate = Color.WHITE.lerp(Color(1, 0.15, 0.1), t)   # červená podle teploty
+		body.modulate = base_color.lerp(Color(1, 0.15, 0.1), t)    # červená podle teploty
 	if in_fan_t > 0:
 		body.modulate = body.modulate.lerp(Color(0.6, 1.3, 1.6), 0.5)  # chladne ve ventilátoru
 	frost.emitting = in_fan_t > 0
@@ -590,3 +710,77 @@ func remove_corrupt(id):
 		"packet": jam_chance = maxf(jam_chance - 0.15, 0.0)
 		"dry": drop_mult /= 0.7
 		"clog": vent_cd_time -= 1.5
+
+
+# návrat do hry (co-op: mrtvý hráč se vrátí v dalším sektoru)
+func revive(pos: Vector2):
+	dead = false
+	heat = 0.0
+	crash_timer = 0.0
+	dash_timer = 0.0
+	oc_level = 0
+	oc_hold = 0.0
+	knock = Vector2.ZERO
+	velocity = Vector2.ZERO
+	invuln = 1.5
+	global_position = pos
+	smoke.emitting = false
+	body.modulate = base_color
+	heat_changed.emit(heat)
+	Juice.burst(global_position + Vector2(0, -20), Color(0.6, 1.8, 2.2), 20)
+
+
+# ============================================================
+#  Síť – stav hráče (host -> klient)
+# ============================================================
+
+func net_state() -> Array:
+	return [global_position, heat, dead, crash_timer, nitro_timer, in_fan_t, shield, fuse,
+		invuln, aim_dir, oc_level, dash_charges, max_dashes(), vent_cd, chips,
+		double_dash_timer, redline_start, upgrades, corrupts, dash_timer > 0, dash_overclocked, vent_cd_time]
+
+
+# (klient) převezme stav a jen ho vykreslí
+func apply_net_state(st: Array, delta: float, local_aim = null):
+	_net_pos = st[0]
+	if global_position.distance_to(_net_pos) > 200.0:
+		global_position = _net_pos
+	else:
+		global_position = global_position.lerp(_net_pos, 1.0 - exp(-20.0 * delta))
+	heat = st[1]
+	dead = st[2]
+	crash_timer = st[3]
+	nitro_timer = st[4]
+	in_fan_t = st[5]
+	shield = st[6]
+	fuse = st[7]
+	invuln = st[8]
+	aim_dir = st[9] if local_aim == null else local_aim
+	oc_level = st[10]
+	dash_charges = st[11]
+	_net_max_dashes = st[12]
+	vent_cd = st[13]
+	chips = st[14]
+	double_dash_timer = st[15]
+	redline_start = st[16]
+	upgrades = st[17]
+	corrupts = st[18]
+	dash_overclocked = st[20]
+	vent_cd_time = st[21]
+	facing = 1 if aim_dir.x >= 0 else -1
+	gun.rotation = aim_dir.angle()
+	gun.scale.y = facing
+	if dead:
+		body.modulate = Color(0.3, 0.3, 0.3)
+		smoke.emitting = true
+		return
+	if st[19]:                            # dash -> duchové
+		ghost_timer -= delta
+		if ghost_timer <= 0:
+			ghost_timer = GHOST_INTERVAL
+			spawn_ghost()
+	if crash_timer > 0:
+		body.modulate = Color(0.25, 0.35, 1.2) if int(crash_timer * 6) % 2 == 0 else Color(0.1, 0.12, 0.45)
+		smoke.emitting = true
+		return
+	update_visual(delta)

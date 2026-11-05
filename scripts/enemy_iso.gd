@@ -25,7 +25,8 @@ var accel := 1200.0
 var stun := 0.0                       # po odhození chvíli nekontroluje pohyb
 var wall_steer := Vector2.ZERO        # obcházení bloků
 var t := 0.0
-var player
+var player                            # aktuální cíl = nejbližší živý hráč
+var retarget := 0.0
 
 @onready var body = $Visual/Body
 @onready var visual = $Visual
@@ -34,7 +35,7 @@ var player
 
 func _ready():
 	add_to_group("enemies")
-	player = get_tree().get_first_node_in_group("player")
+	player = nearest_player(global_position)
 	speed *= speed_scale * randf_range(0.85, 1.15)
 	target_offset = Vector2(randf_range(-30.0, 30.0), randf_range(-15.0, 15.0))
 	accel = randf_range(900.0, 1500.0)
@@ -59,6 +60,10 @@ func on_death():
 func _physics_process(delta):
 	t += delta
 	stun -= delta
+	retarget -= delta
+	if retarget <= 0 or player == null or player.dead:
+		retarget = 0.4
+		player = nearest_player(global_position)
 	if stun > 0 or player == null or player.dead:
 		velocity = velocity.move_toward(Vector2.ZERO, 600.0 * delta)
 	else:
@@ -100,6 +105,20 @@ func chase_dir() -> Vector2:
 	var to = player.global_position + target_offset - global_position
 	var w = Vector2(to.x, to.y * 2.0)
 	return w.normalized() if w.length() > 8.0 else Vector2.ZERO
+
+
+# nejbližší živý hráč (co-op), nebo null
+func nearest_player(pos: Vector2):
+	var best = null
+	var best_d = INF
+	for p in get_tree().get_nodes_in_group("player"):
+		if p.dead:
+			continue
+		var d = iso_dist(p.global_position, pos)
+		if d < best_d:
+			best_d = d
+			best = p
+	return best
 
 
 # vzdálenost v "herních" souřadnicích
