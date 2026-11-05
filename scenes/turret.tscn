@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/turret.gd" id="1"]
+
+[sub_resource type="CircleShape2D" id="shape"]
+radius = 13.0
+
+[sub_resource type="CircleShape2D" id="hit"]
+radius = 16.0
+
+[node name="Turret" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 33
+motion_mode = 1
+script = ExtResource("1")
+hp = 6
+contact_heat = 10.0
+score_value = 30
+drops = 0.5
+knock_resist = 1.0
+burst_color = Color(1.6, 0.6, 0.2, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="Shadow" type="Polygon2D" parent="."]
+color = Color(0, 0, 0, 0.4)
+polygon = PackedVector2Array(20.0, 0.0, 19.3, 2.6, 17.3, 5.0, 14.1, 7.1, 10.0, 8.7, 5.2, 9.7, 0.0, 10.0, -5.2, 9.7, -10.0, 8.7, -14.1, 7.1, -17.3, 5.0, -19.3, 2.6, -20.0, 0.0, -19.3, -2.6, -17.3, -5.0, -14.1, -7.1, -10.0, -8.7, -5.2, -9.7, -0.0, -10.0, 5.2, -9.7, 10.0, -8.7, 14.1, -7.1, 17.3, -5.0, 19.3, -2.6)
+
+[node name="Visual" type="Node2D" parent="."]
+modulate = Color(1.2, 1.2, 1.2, 1)
+
+[node name="Body" type="Node2D" parent="Visual"]
+
+[node name="Right" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.28, 0.1, 0.08, 1)
+polygon = PackedVector2Array(22.4, -16.0, 0.0, -4.8, 0.0, 11.2, 22.4, 0.0)
+
+[node name="Left" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.4, 0.14, 0.1, 1)
+polygon = PackedVector2Array(-22.4, -16.0, 0.0, -4.8, 0.0, 11.2, -22.4, 0.0)
+
+[node name="Top" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.5, 0.2, 0.14, 1)
+polygon = PackedVector2Array(0.0, -27.2, 22.4, -16.0, 0.0, -4.8, -22.4, -16.0)
+
+[node name="Core" type="Node2D" parent="Visual/Body"]
+
+[node name="Right" type="Polygon2D" parent="Visual/Body/Core"]
+color = Color(0.8, 0.3, 0.08, 1)
+polygon = PackedVector2Array(12.8, -28.0, 0.0, -21.6, 0.0, -9.6, 12.8, -16.0)
+
+[node name="Left" type="Polygon2D" parent="Visual/Body/Core"]
+color = Color(1, 0.42, 0.1, 1)
+polygon = PackedVector2Array(-12.8, -28.0, 0.0, -21.6, 0.0, -9.6, -12.8, -16.0)
+
+[node name="Top" type="Polygon2D" parent="Visual/Body/Core"]
+color = Color(1, 0.62, 0.2, 1)
+polygon = PackedVector2Array(0.0, -34.4, 12.8, -28.0, 0.0, -21.6, -12.8, -28.0)
+
+[node name="Gun" type="Node2D" parent="Visual"]
+position = Vector2(0, -24)
+
+[node name="Barrel" type="Polygon2D" parent="Visual/Gun"]
+color = Color(1, 0.5, 0.2, 1)
+polygon = PackedVector2Array(4.0, -3.0, 24.0, -3.0, 24.0, 3.0, 4.0, 3.0)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("hit")
+

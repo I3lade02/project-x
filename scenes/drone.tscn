@@ -1,0 +1,68 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/drone.gd" id="1"]
+
+[sub_resource type="CircleShape2D" id="shape"]
+radius = 10.0
+
+[sub_resource type="CircleShape2D" id="hit"]
+radius = 15.0
+
+[node name="Drone" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 32
+motion_mode = 1
+script = ExtResource("1")
+hp = 2
+speed_scale = 1.5
+contact_heat = 15.0
+score_value = 15
+burst_color = Color(0.8, 0.4, 1.6, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="Shadow" type="Polygon2D" parent="."]
+color = Color(0, 0, 0, 0.35)
+polygon = PackedVector2Array(13.0, 0.0, 12.6, 1.7, 11.3, 3.2, 9.2, 4.6, 6.5, 5.6, 3.4, 6.3, 0.0, 6.5, -3.4, 6.3, -6.5, 5.6, -9.2, 4.6, -11.3, 3.2, -12.6, 1.7, -13.0, 0.0, -12.6, -1.7, -11.3, -3.2, -9.2, -4.6, -6.5, -5.6, -3.4, -6.3, -0.0, -6.5, 3.4, -6.3, 6.5, -5.6, 9.2, -4.6, 11.3, -3.3, 12.6, -1.7)
+
+[node name="Visual" type="Node2D" parent="."]
+modulate = Color(1.2, 1.2, 1.2, 1)
+position = Vector2(0, -36)
+
+[node name="Body" type="Node2D" parent="Visual"]
+
+[node name="Left" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.45, 0.25, 0.75, 1)
+polygon = PackedVector2Array(-17.9, 0.0, 0.0, 9.0, 0.0, 12.0)
+
+[node name="Right" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.35, 0.18, 0.6, 1)
+polygon = PackedVector2Array(0.0, 9.0, 17.9, 0.0, 0.0, 12.0)
+
+[node name="Top" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.75, 0.5, 1, 1)
+polygon = PackedVector2Array(0.0, -9.0, 17.9, 0.0, 0.0, 9.0, -17.9, 0.0)
+
+[node name="Eye" type="Polygon2D" parent="Visual/Body"]
+position = Vector2(0, 2)
+color = Color(2.5, 0.6, 2.2, 1)
+polygon = PackedVector2Array(4.0, 0.0, 3.2, 1.5, 1.2, 2.4, -1.2, 2.4, -3.2, 1.5, -4.0, 0.0, -3.2, -1.5, -1.2, -2.4, 1.2, -2.4, 3.2, -1.5)
+
+[node name="RotorL" type="Polygon2D" parent="Visual/Body"]
+position = Vector2(-20, -6)
+color = Color(0.8, 0.8, 1.2, 0.5)
+polygon = PackedVector2Array(9.0, 0.0, 7.8, 1.5, 4.5, 2.6, 0.0, 3.0, -4.5, 2.6, -7.8, 1.5, -9.0, 0.0, -7.8, -1.5, -4.5, -2.6, -0.0, -3.0, 4.5, -2.6, 7.8, -1.5)
+
+[node name="RotorR" type="Polygon2D" parent="Visual/Body"]
+position = Vector2(20, -6)
+color = Color(0.8, 0.8, 1.2, 0.5)
+polygon = PackedVector2Array(9.0, 0.0, 7.8, 1.5, 4.5, 2.6, 0.0, 3.0, -4.5, 2.6, -7.8, 1.5, -9.0, 0.0, -7.8, -1.5, -4.5, -2.6, -0.0, -3.0, 4.5, -2.6, 7.8, -1.5)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("hit")
+

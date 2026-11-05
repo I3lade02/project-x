@@ -1,9 +1,14 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/moving_platform.gd" id="1"]
+[ext_resource type="Shader" path="res://shaders/neon_rect.gdshader" id="2"]
 
 [sub_resource type="RectangleShape2D" id="shape"]
 size = Vector2(140, 20)
+
+[sub_resource type="ShaderMaterial" id="neon"]
+shader = ExtResource("2")
+shader_parameter/edge_color = Color(0.75, 0.4, 1, 1)
 
 [node name="MovingPlatform" type="AnimatableBody2D"]
 collision_layer = 16
@@ -15,6 +20,7 @@ shape = SubResource("shape")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="."]
+material = SubResource("neon")
 offset_left = -70.0
 offset_top = -10.0
 offset_right = 70.0

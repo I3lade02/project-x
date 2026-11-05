@@ -1,6 +1,6 @@
 extends Control
 
-const ARENA = "res://scenes/arena.tscn"
+const ARENA = "res://scenes/arena_iso.tscn"   # 2D bokovka: res://scenes/arena.tscn
 const Upgrades = preload("res://scripts/upgrades.gd")
 
 @onready var menu = $Center

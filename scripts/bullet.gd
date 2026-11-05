@@ -6,10 +6,14 @@ var direction := Vector2.RIGHT
 var damage := 1
 var pierce := 0              # kolik bugů navíc projde
 var hit_list := []
+var hot := false            # REDLINE střela
 
 
 func _ready():
 	rotation = direction.angle()
+	if hot:
+		$Rect.color = Color(3.5, 0.7, 0.3)
+		scale = Vector2(1.5, 1.5)
 	body_entered.connect(_on_hit)
 	get_tree().create_timer(1.5, false).timeout.connect(queue_free)
 

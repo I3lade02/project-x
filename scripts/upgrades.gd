@@ -9,11 +9,13 @@ const LIST = {
 	"multishot": {"name": "Dvojitá hlaveň",     "desc": "+1 střela navíc (vějíř)",                   "max": 3, "tag": "jam"},
 	"damage":    {"name": "Tvrdší náboje",      "desc": "Poškození +1",                              "max": 3, "tag": "damage"},
 	"speed":     {"name": "Rychlé nohy",        "desc": "Rychlost pohybu +10 %",                     "max": 3, "tag": "speed"},
-	"jump":      {"name": "Pružiny",            "desc": "+1 skok ve vzduchu (trvale)",               "max": 1, "tag": "jump"},
+	"jump":      {"name": "Dvojitý dash",       "desc": "+1 dash navíc (trvale)",                    "max": 1, "tag": "dash"},
 	"armor":     {"name": "Chlazený plášť",     "desc": "Dotyk bugu hřeje o 30 % méně",              "max": 2, "tag": "contact"},
 	"reboot":    {"name": "Rychlý reboot",      "desc": "Crash trvá o 0,7 s kratší",                 "max": 2, "tag": "crash"},
 	"blast":     {"name": "Termální výbuch",    "desc": "Při crashi vybuchneš a zraníš bugy kolem",  "max": 1, "tag": "crash"},
 	"heatpower": {"name": "Žár = síla",         "desc": "Nad 50 % teploty +1 poškození",             "max": 1, "tag": "damage"},
+	"ventcd":    {"name": "Turbo vent",         "desc": "Cooldown ventu −1 s",                       "max": 2, "tag": "vent"},
+	"redline":   {"name": "Redline mistr",      "desc": "REDLINE začíná už od 70 %",                 "max": 1, "tag": "redline"},
 }
 
 # postihy – corrupt se stejným tagem jako upgrade se k němu nikdy nevylosuje
@@ -30,6 +32,7 @@ const CORRUPTS = {
 	"boot":      {"name": "Pomalý boot",         "desc": "Crash trvá o 0,5 s déle",               "max": 2, "tag": "crash"},
 	"packet":    {"name": "Packet loss",         "desc": "15 % výstřelů se zasekne (ale hřeje)",  "max": 2, "tag": "jam"},
 	"dry":       {"name": "Vyschlé chladivo",    "desc": "Bonusy padají o 30 % méně často",       "max": 2, "tag": "drops"},
+	"clog":      {"name": "Ucpaný vent",         "desc": "Cooldown ventu +1,5 s",                 "max": 2, "tag": "vent"},
 }
 
 

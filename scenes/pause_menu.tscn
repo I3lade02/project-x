@@ -43,6 +43,7 @@ theme_override_constants/margin_bottom = 24
 theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Root/Center/Panel/Margin/Menu"]
+theme_type_variation = &"HeaderLabel"
 theme_override_font_sizes/font_size = 40
 text = "PAUZA"
 horizontal_alignment = 1
@@ -96,6 +97,7 @@ theme_override_constants/margin_bottom = 20
 theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Root/BuildPanel/Margin/VBox"]
+theme_type_variation = &"HeaderLabel"
 theme_override_font_sizes/font_size = 28
 text = "BUILD"
 horizontal_alignment = 1

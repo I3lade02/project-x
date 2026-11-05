@@ -4,6 +4,10 @@ const SOUNDS = {
 	"shoot": preload("res://sounds/shoot.wav"),
 	"jam": preload("res://sounds/jam.wav"),
 	"jump": preload("res://sounds/jump.wav"),
+	"land": preload("res://sounds/land.wav"),
+	"dash": preload("res://sounds/dash.wav"),
+	"vent": preload("res://sounds/vent.wav"),
+	"oc_up": preload("res://sounds/oc_up.wav"),
 	"hurt": preload("res://sounds/hurt.wav"),
 	"crash": preload("res://sounds/crash.wav"),
 	"reboot": preload("res://sounds/reboot.wav"),
@@ -16,6 +20,15 @@ const SOUNDS = {
 	"click": preload("res://sounds/click.wav"),
 	"warn": preload("res://sounds/warn.wav"),
 	"game_over": preload("res://sounds/game_over.wav"),
+	"charge": preload("res://sounds/charge.wav"),
+	"cool": preload("res://sounds/cool.wav"),
+	"chip": preload("res://sounds/chip.wav"),
+	"buy": preload("res://sounds/buy.wav"),
+	"shield": preload("res://sounds/shield.wav"),
+	"orb": preload("res://sounds/orb.wav"),
+	"boss_spawn": preload("res://sounds/boss_spawn.wav"),
+	"boss_phase": preload("res://sounds/boss_phase.wav"),
+	"boss_die": preload("res://sounds/boss_die.wav"),
 }
 const POOL_SIZE = 16
 
