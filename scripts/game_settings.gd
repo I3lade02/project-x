@@ -4,19 +4,36 @@ const PATH = "user://settings.cfg"
 
 # akce, které jde přebindovat : český název v menu
 const REBINDABLE = {
+	"move_up": "Nahoru",
+	"move_down": "Dolů",
 	"move_left": "Doleva",
 	"move_right": "Doprava",
-	"move_down": "Dolů (propadnout)",
-	"jump": "Skok",
 	"shoot": "Střelba",
+	"dash": "Dash",
+	"vent": "Vent",
 	"overclock": "Overclock",
+	"interact": "Terminál (interakce)",
 }
 
 var master_volume := 1.0
+var glow := 0.5                 # intenzita záře (WorldEnvironment glow)
 
 
 func _ready():
 	load_settings()
+	# každé nové prostředí (aréna, menu) dostane nastavenou záři
+	get_tree().node_added.connect(_on_node_added)
+
+
+func _on_node_added(n):
+	if n is WorldEnvironment and n.environment:
+		n.environment.glow_intensity = glow
+
+
+func apply_glow():
+	for n in get_tree().root.find_children("*", "WorldEnvironment", true, false):
+		if n.environment:
+			n.environment.glow_intensity = glow
 
 
 func load_settings():
@@ -32,6 +49,7 @@ func load_settings():
 				if ev:
 					InputMap.action_add_event(action, ev)
 	master_volume = cfg.get_value("audio", "master", 1.0)
+	glow = cfg.get_value("video", "glow", 0.5)
 	apply_volume()
 
 
@@ -45,6 +63,7 @@ func save_settings():
 				list.append(s)
 		cfg.set_value("input", action, list)
 	cfg.set_value("audio", "master", master_volume)
+	cfg.set_value("video", "glow", glow)
 	cfg.save(PATH)
 
 
@@ -61,7 +80,9 @@ func get_binding(action):
 func reset_defaults():
 	InputMap.load_from_project_settings()
 	master_volume = 1.0
+	glow = 0.5
 	apply_volume()
+	apply_glow()
 	save_settings()
 
 

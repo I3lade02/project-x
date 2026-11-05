@@ -4,3 +4,5 @@
 
 # Export output
 build/
+.DS_Store
+Claude outputs/

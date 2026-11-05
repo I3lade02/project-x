@@ -34,6 +34,7 @@ grow_vertical = 2
 theme_override_constants/separation = 24
 
 [node name="Title" type="Label" parent="Root/Center/VBox"]
+theme_type_variation = &"HeaderLabel"
 theme_override_font_sizes/font_size = 36
 text = "WAVE CLEAR – vyber upgrade (pozor na corrupt!)"
 horizontal_alignment = 1
@@ -56,6 +57,12 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(300, 260)
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 3
+
+[node name="RerollButton" type="Button" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(300, 44)
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "REROLL"
 
 [node name="Text" type="RichTextLabel" parent="Root/Center/VBox/Cards/Card1"]
 anchors_preset = 15

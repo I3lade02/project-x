@@ -17,6 +17,7 @@ var jump_cd := 0.0
 var drop_timer := 0.0
 var target_offset := 0.0        # každý bug míří kousek vedle hráče
 var accel := 1200.0
+var stun := 0.0                 # po odhození chvíli nekontroluje pohyb
 var player
 
 @onready var body = $Body
@@ -56,8 +57,12 @@ func _physics_process(delta):
 				velocity.y = JUMP
 				jump_cd = randf_range(0.8, 1.6)
 
-	desired_x += separation() * speed * SEPARATION_FORCE
-	velocity.x = move_toward(velocity.x, desired_x, accel * delta)
+	stun -= delta
+	if stun > 0:
+		velocity.x = move_toward(velocity.x, 0, 600 * delta)
+	else:
+		desired_x += separation() * speed * SEPARATION_FORCE
+		velocity.x = move_toward(velocity.x, desired_x, accel * delta)
 
 	move_and_slide()
 
@@ -80,6 +85,12 @@ func separation():
 				side = 1 if get_instance_id() > other.get_instance_id() else -1
 			push += side * (1.0 - abs(d.x) / SEPARATION_DIST)
 	return clamp(push, -1.0, 1.0)
+
+
+# odhození (vent)
+func knockback(force: Vector2):
+	velocity = force
+	stun = 0.35
 
 
 func take_damage(amount):

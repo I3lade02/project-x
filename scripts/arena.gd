@@ -13,6 +13,8 @@ const DROP_CHANCE = 0.25
 @onready var score_label = $HUD/ScoreLabel
 @onready var wave_label = $HUD/WaveLabel
 @onready var buff_label = $HUD/BuffLabel
+@onready var heat_info = $HUD/HeatInfo
+@onready var redline_mark = $HUD/HeatBar/RedlineMark
 @onready var spawn_points = $SpawnPoints
 @onready var upgrade_screen = $UpgradeScreen
 
@@ -37,6 +39,7 @@ func _ready():
 
 func _process(delta):
 	update_buffs()
+	update_heat_info()
 	if game_over or to_spawn <= 0:
 		return
 	spawn_timer -= delta
@@ -136,6 +139,28 @@ func update_buffs():
 	if player.nitro_timer > 0:
 		parts.append("NITRO %d s" % ceil(player.nitro_timer))
 	buff_label.text = "   ".join(PackedStringArray(parts))
+
+
+const OC_NAMES = ["-", "I", "II", "III"]
+
+
+# řádek pod teplotou: úroveň overclocku, vent, REDLINE
+func update_heat_info():
+	var txt = "OC %s" % OC_NAMES[player.oc_level]
+	if player.vent_cd > 0:
+		txt += "   VENT %.1f s" % player.vent_cd
+	elif player.heat >= player.VENT_MIN_HEAT:
+		txt += "   VENT PŘIPRAVEN [Q]"
+	else:
+		txt += "   VENT (min. 40 %)"
+	if player.in_redline():
+		txt += "   >> REDLINE <<"
+		var blink = int(Time.get_ticks_msec() / 120) % 2 == 0
+		heat_info.modulate = Color(3, 0.5, 0.3) if blink else Color(1.5, 0.8, 0.6)
+	else:
+		heat_info.modulate = Color(0.7, 1.2, 1.4)
+	heat_info.text = txt
+	redline_mark.position.x = heat_bar.size.x * player.redline_start / 100.0 - 1.0
 
 
 # zobrazí text, volitelně ho po čase zase smaže

@@ -14,6 +14,7 @@ script = ExtResource("1")
 shape = SubResource("shape")
 
 [node name="Visual" type="Node2D" parent="."]
+modulate = Color(1.7, 1.7, 1.7, 1)
 
 [node name="Body" type="ColorRect" parent="Visual"]
 offset_left = -14.0
@@ -28,9 +29,6 @@ offset_top = -12.0
 offset_right = 10.0
 offset_bottom = -6.0
 color = Color(0.1, 0.1, 0.1, 1)
-
-[node name="Muzzle" type="Marker2D" parent="Visual"]
-position = Vector2(20, -4)
 
 [node name="Smoke" type="CPUParticles2D" parent="."]
 position = Vector2(0, -20)
@@ -48,5 +46,19 @@ color = Color(0.5, 0.5, 0.5, 0.7)
 
 [node name="BlastRing" type="Polygon2D" parent="."]
 visible = false
-color = Color(1, 0.5, 0.1, 0.5)
+color = Color(3, 1.5, 0.3, 0.6)
 polygon = PackedVector2Array(180.0, 0.0, 176.5, 35.1, 166.3, 68.9, 149.7, 100.0, 127.3, 127.3, 100.0, 149.7, 68.9, 166.3, 35.1, 176.5, 0.0, 180.0, -35.1, 176.5, -68.9, 166.3, -100.0, 149.7, -127.3, 127.3, -149.7, 100.0, -166.3, 68.9, -176.5, 35.1, -180.0, 0.0, -176.5, -35.1, -166.3, -68.9, -149.7, -100.0, -127.3, -127.3, -100.0, -149.7, -68.9, -166.3, -35.1, -176.5, -0.0, -180.0, 35.1, -176.5, 68.9, -166.3, 100.0, -149.7, 127.3, -127.3, 149.7, -100.0, 166.3, -68.9, 176.5, -35.1)
+
+[node name="Gun" type="Node2D" parent="."]
+modulate = Color(1.8, 1.8, 1.8, 1)
+position = Vector2(0, -2)
+
+[node name="Barrel" type="ColorRect" parent="Gun"]
+offset_left = 4.0
+offset_top = -3.0
+offset_right = 22.0
+offset_bottom = 3.0
+color = Color(0.35, 0.9, 1, 1)
+
+[node name="Muzzle" type="Marker2D" parent="Gun"]
+position = Vector2(24, 0)

@@ -1,0 +1,59 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tank.gd" id="1"]
+
+[sub_resource type="CircleShape2D" id="shape"]
+radius = 17.0
+
+[sub_resource type="CircleShape2D" id="hit"]
+radius = 22.0
+
+[node name="Tank" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 33
+motion_mode = 1
+script = ExtResource("1")
+hp = 14
+speed_scale = 0.55
+contact_heat = 30.0
+score_value = 40
+drops = 0.5
+knock_resist = 0.7
+separation_dist = 50.0
+burst_color = Color(0.8, 0.9, 1.2, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="Shadow" type="Polygon2D" parent="."]
+color = Color(0, 0, 0, 0.45)
+polygon = PackedVector2Array(28.0, 0.0, 27.0, 3.6, 24.2, 7.0, 19.8, 9.9, 14.0, 12.1, 7.2, 13.5, 0.0, 14.0, -7.2, 13.5, -14.0, 12.1, -19.8, 9.9, -24.2, 7.0, -27.0, 3.6, -28.0, 0.0, -27.0, -3.6, -24.2, -7.0, -19.8, -9.9, -14.0, -12.1, -7.2, -13.5, -0.0, -14.0, 7.2, -13.5, 14.0, -12.1, 19.8, -9.9, 24.2, -7.0, 27.0, -3.6)
+
+[node name="Visual" type="Node2D" parent="."]
+modulate = Color(1.2, 1.2, 1.2, 1)
+
+[node name="Body" type="Node2D" parent="Visual"]
+
+[node name="Right" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.22, 0.27, 0.32, 1)
+polygon = PackedVector2Array(28.8, -34.0, 0.0, -19.6, 0.0, 14.4, 28.8, 0.0)
+
+[node name="Left" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.32, 0.38, 0.44, 1)
+polygon = PackedVector2Array(-28.8, -34.0, 0.0, -19.6, 0.0, 14.4, -28.8, 0.0)
+
+[node name="Top" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.45, 0.52, 0.58, 1)
+polygon = PackedVector2Array(0.0, -48.4, 28.8, -34.0, 0.0, -19.6, -28.8, -34.0)
+
+[node name="Core" type="Polygon2D" parent="Visual/Body"]
+color = Color(1.8, 0.25, 0.15, 1)
+polygon = PackedVector2Array(-24.5, -19.8, -4.3, -9.8, -4.3, -1.8, -24.5, -11.8)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("hit")
+

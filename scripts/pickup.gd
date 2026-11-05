@@ -8,7 +8,7 @@ const COLORS = {
 	Type.NITRO: Color(0.9, 0.9, 1.0),
 }
 const LETTERS = {
-	Type.DOUBLE_JUMP: "J",
+	Type.DOUBLE_JUMP: "D",       # v izo verzi = double dash
 	Type.COOLANT: "C",
 	Type.NITRO: "N",
 }

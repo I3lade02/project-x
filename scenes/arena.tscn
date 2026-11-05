@@ -8,9 +8,30 @@
 [ext_resource type="PackedScene" path="res://scenes/hot_plate.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/moving_platform.tscn" id="7"]
 [ext_resource type="Script" uid="uid://fuqyr1qxi8yt" path="res://scripts/camera.gd" id="8"]
+[ext_resource type="Shader" uid="uid://c1y0tullm53si" path="res://shaders/neon_rect.gdshader" id="10"]
+[ext_resource type="Shader" uid="uid://3tgxte6p6rc5" path="res://shaders/grid_bg.gdshader" id="11"]
+[ext_resource type="Shader" uid="uid://bns16fcbp04wk" path="res://shaders/post.gdshader" id="12"]
+[ext_resource type="Script" uid="uid://c4j3u8suyqmpj" path="res://scripts/heat_fx.gd" id="13"]
+[ext_resource type="Script" uid="uid://icm4j7xkeb1g" path="res://scripts/crosshair.gd" id="14"]
+
+[sub_resource type="ShaderMaterial" id="grid_mat"]
+shader = ExtResource("11")
+shader_parameter/base_color = Color(0.015, 0.015, 0.05, 1)
+shader_parameter/grid_color = Color(0.3, 0.12, 0.75, 1)
+shader_parameter/hot_color = Color(1, 0.15, 0.05, 1)
+shader_parameter/size = Vector2(1360, 800)
+shader_parameter/cell = 48.0
+shader_parameter/scroll_speed = 12.0
 
 [sub_resource type="RectangleShape2D" id="s0"]
 size = Vector2(1280, 40)
+
+[sub_resource type="ShaderMaterial" id="neon_floor"]
+shader = ExtResource("10")
+shader_parameter/fill_color = Color(0.04, 0.05, 0.1, 1)
+shader_parameter/edge_color = Color(1, 0.25, 0.85, 1)
+shader_parameter/edge_px = 3.0
+shader_parameter/glow_strength = 2.5
 
 [sub_resource type="RectangleShape2D" id="s1"]
 size = Vector2(40, 720)
@@ -20,6 +41,13 @@ size = Vector2(40, 720)
 
 [sub_resource type="RectangleShape2D" id="s3"]
 size = Vector2(240, 20)
+
+[sub_resource type="ShaderMaterial" id="neon_plat"]
+shader = ExtResource("10")
+shader_parameter/fill_color = Color(0.04, 0.05, 0.1, 1)
+shader_parameter/edge_color = Color(0.2, 0.9, 1, 1)
+shader_parameter/edge_px = 2.0
+shader_parameter/glow_strength = 2.5
 
 [sub_resource type="RectangleShape2D" id="s4"]
 size = Vector2(240, 20)
@@ -36,13 +64,45 @@ size = Vector2(200, 20)
 [sub_resource type="RectangleShape2D" id="s8"]
 size = Vector2(160, 20)
 
+[sub_resource type="ShaderMaterial" id="post_mat"]
+shader = ExtResource("12")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 3
+glow_enabled = true
+glow_levels/1 = 1.0
+glow_levels/2 = 1.0
+glow_levels/3 = 1.0
+glow_intensity = 1.0
+glow_strength = 1.1
+glow_blend_mode = 0
+
 [node name="Arena" type="Node2D" unique_id=969839782]
 script = ExtResource("1")
 
 [node name="Background" type="ColorRect" parent="." unique_id=392162058]
-offset_right = 1280.0
-offset_bottom = 720.0
+material = SubResource("grid_mat")
+offset_left = -40.0
+offset_top = -40.0
+offset_right = 1320.0
+offset_bottom = 760.0
 color = Color(0.07, 0.08, 0.12, 1)
+
+[node name="Motes" type="CPUParticles2D" parent="." unique_id=2010395398]
+position = Vector2(640, 760)
+amount = 40
+lifetime = 9.0
+preprocess = 9.0
+emission_shape = 3
+emission_rect_extents = Vector2(680, 10)
+direction = Vector2(0, -1)
+spread = 10.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 50.0
+scale_amount_min = 1.5
+scale_amount_max = 3.5
+color = Color(0.6, 0.35, 1.4, 0.35)
 
 [node name="Platforms" type="Node2D" parent="." unique_id=1675017426]
 
@@ -53,6 +113,7 @@ position = Vector2(640, 700)
 shape = SubResource("s0")
 
 [node name="Rect" type="ColorRect" parent="Platforms/Floor" unique_id=1967110173]
+material = SubResource("neon_floor")
 offset_left = -640.0
 offset_top = -20.0
 offset_right = 640.0
@@ -66,6 +127,7 @@ position = Vector2(-20, 360)
 shape = SubResource("s1")
 
 [node name="Rect" type="ColorRect" parent="Platforms/WallL" unique_id=1947523147]
+material = SubResource("neon_floor")
 offset_left = -20.0
 offset_top = -360.0
 offset_right = 20.0
@@ -79,6 +141,7 @@ position = Vector2(1300, 360)
 shape = SubResource("s2")
 
 [node name="Rect" type="ColorRect" parent="Platforms/WallR" unique_id=383634884]
+material = SubResource("neon_floor")
 offset_left = -20.0
 offset_top = -360.0
 offset_right = 20.0
@@ -94,6 +157,7 @@ shape = SubResource("s3")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="Platforms/P1" unique_id=945213522]
+material = SubResource("neon_plat")
 offset_left = -120.0
 offset_top = -10.0
 offset_right = 120.0
@@ -109,6 +173,7 @@ shape = SubResource("s4")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="Platforms/P2" unique_id=1370160692]
+material = SubResource("neon_plat")
 offset_left = -120.0
 offset_top = -10.0
 offset_right = 120.0
@@ -124,6 +189,7 @@ shape = SubResource("s5")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="Platforms/P3" unique_id=396770653]
+material = SubResource("neon_plat")
 offset_left = -150.0
 offset_top = -10.0
 offset_right = 150.0
@@ -139,6 +205,7 @@ shape = SubResource("s6")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="Platforms/P4" unique_id=1882963715]
+material = SubResource("neon_plat")
 offset_left = -100.0
 offset_top = -10.0
 offset_right = 100.0
@@ -154,6 +221,7 @@ shape = SubResource("s7")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="Platforms/P5" unique_id=1428490091]
+material = SubResource("neon_plat")
 offset_left = -100.0
 offset_top = -10.0
 offset_right = 100.0
@@ -169,6 +237,7 @@ shape = SubResource("s8")
 one_way_collision = true
 
 [node name="Rect" type="ColorRect" parent="Platforms/P6" unique_id=665111224]
+material = SubResource("neon_plat")
 offset_left = -80.0
 offset_top = -10.0
 offset_right = 80.0
@@ -196,6 +265,7 @@ position = Vector2(640, 280)
 position = Vector2(640, 640)
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=468012479]
+layer = 2
 
 [node name="HeatBar" type="ProgressBar" parent="HUD" unique_id=483372943]
 offset_left = 20.0
@@ -237,10 +307,62 @@ horizontal_alignment = 1
 
 [node name="BuffLabel" type="Label" parent="HUD" unique_id=1627848942]
 offset_left = 20.0
-offset_top = 50.0
+offset_top = 76.0
 offset_right = 620.0
-offset_bottom = 74.0
+offset_bottom = 100.0
 theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
+
+[node name="Crosshair" type="Control" parent="HUD" unique_id=1367453663]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("14")
+
+[node name="Up" type="ColorRect" parent="HUD/Crosshair" unique_id=1778998335]
+layout_mode = 0
+offset_left = -1.0
+offset_top = -12.0
+offset_right = 1.0
+offset_bottom = -5.0
+mouse_filter = 2
+color = Color(0.5, 1, 1, 1)
+
+[node name="Down" type="ColorRect" parent="HUD/Crosshair" unique_id=1757149631]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 5.0
+offset_right = 1.0
+offset_bottom = 12.0
+mouse_filter = 2
+color = Color(0.5, 1, 1, 1)
+
+[node name="Left" type="ColorRect" parent="HUD/Crosshair" unique_id=972157240]
+layout_mode = 0
+offset_left = -12.0
+offset_top = -1.0
+offset_right = -5.0
+offset_bottom = 1.0
+mouse_filter = 2
+color = Color(0.5, 1, 1, 1)
+
+[node name="Right" type="ColorRect" parent="HUD/Crosshair" unique_id=1116358909]
+layout_mode = 0
+offset_left = 5.0
+offset_top = -1.0
+offset_right = 12.0
+offset_bottom = 1.0
+mouse_filter = 2
+color = Color(0.5, 1, 1, 1)
+
+[node name="Dot" type="ColorRect" parent="HUD/Crosshair" unique_id=244490390]
+layout_mode = 0
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 1.0
+offset_bottom = 1.0
+mouse_filter = 2
+color = Color(0.5, 1, 1, 1)
 
 [node name="SpawnPoints" type="Node2D" parent="." unique_id=1690142353]
 
@@ -260,3 +382,34 @@ position = Vector2(640, 100)
 [node name="Camera" type="Camera2D" parent="." unique_id=1276673613]
 position = Vector2(640, 360)
 script = ExtResource("8")
+
+[node name="PostFX" type="CanvasLayer" parent="." unique_id=1889604945]
+script = ExtResource("13")
+
+[node name="Screen" type="ColorRect" parent="PostFX" unique_id=1277410360]
+material = SubResource("post_mat")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=771702504]
+environment = SubResource("env")
+
+[node name="HeatInfo" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 48.0
+offset_right = 620.0
+offset_bottom = 72.0
+theme_override_font_sizes/font_size = 16
+text = "OC -   VENT OK"
+
+[node name="RedlineMark" type="ColorRect" parent="HUD/HeatBar"]
+offset_left = 239.0
+offset_top = -4.0
+offset_right = 241.0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(3, 0.3, 0.2, 1)

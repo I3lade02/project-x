@@ -2,6 +2,22 @@
 
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/settings.tscn" id="2"]
+[ext_resource type="Shader" path="res://shaders/grid_bg.gdshader" id="11"]
+
+[sub_resource type="ShaderMaterial" id="grid_mat"]
+shader = ExtResource("11")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 0.5
+glow_strength = 0.9
+glow_blend_mode = 1
+glow_hdr_threshold = 1.15
+glow_levels/1 = 0.6
+glow_levels/2 = 0.8
+glow_levels/3 = 0.5
+glow_levels/5 = 0.0
 
 [node name="MainMenu" type="Control"]
 anchors_preset = 15
@@ -12,12 +28,29 @@ grow_vertical = 2
 script = ExtResource("1")
 
 [node name="Background" type="ColorRect" parent="."]
+material = SubResource("grid_mat")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.07, 0.08, 0.12, 1)
+
+[node name="Motes" type="CPUParticles2D" parent="."]
+position = Vector2(640, 760)
+amount = 40
+lifetime = 9.0
+preprocess = 9.0
+emission_shape = 3
+emission_rect_extents = Vector2(680, 10)
+direction = Vector2(0, -1)
+spread = 10.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 50.0
+scale_amount_min = 1.5
+scale_amount_max = 3.5
+color = Color(0.6, 0.35, 1.4, 0.35)
 
 [node name="Center" type="CenterContainer" parent="."]
 anchors_preset = 15
@@ -30,6 +63,9 @@ grow_vertical = 2
 theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Center/Menu"]
+theme_type_variation = &"HeaderLabel"
+theme_override_colors/font_color = Color(2.2, 0.55, 1.8, 1)
+theme_override_font_sizes/font_size = 96
 theme_override_font_sizes/font_size = 64
 text = "OVERCLOCK"
 horizontal_alignment = 1
@@ -93,6 +129,7 @@ theme_override_constants/margin_bottom = 24
 theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox"]
+theme_type_variation = &"HeaderLabel"
 theme_override_font_sizes/font_size = 32
 text = "NÁPOVĚDA"
 horizontal_alignment = 1
@@ -119,13 +156,13 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "J"
+text = "D"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy/RowJ"]
 theme_override_font_sizes/font_size = 17
-text = "DOUBLE JUMP – 12 s můžeš skočit podruhé ve vzduchu."
+text = "DOUBLE DASH – 12 s máš o 1 dash navíc (2 dashe za sebou)."
 custom_minimum_size = Vector2(660, 0)
 size_flags_vertical = 4
 autowrap_mode = 3
@@ -186,7 +223,7 @@ autowrap_mode = 3
 
 [node name="Tip" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Bonusy"]
 theme_override_font_sizes/font_size = 16
-text = "Bonusy padají z poražených bugů a po 8 s zmizí.\nČím vyšší teplota, tím vyšší násobič skóre (až x4).\nPřehřátí = CRASH. Zásah během crashe = konec hry!"
+text = "Bonusy padají z poražených bugů a po 8 s zmizí. ČIPY z nepřátel utratíš v TERMINÁLU [E] u chodby po každé vlně, nebo za REROLL karet.\nOVERCLOCK (Shift): čím déle držíš, tím vyšší úroveň (I–III) – rychlejší pohyb a palba, ale víc tepla.\nREDLINE (80–100 %): +1 poškození a vyšší násobič skóre. Přehřátí = CRASH, zásah během crashe = konec!\nVENT (Q / kolečko): od 40 % tepla vypustíš všechno teplo jako výbuch páry – čím víc tepla, tím silnější.\nDASH (pravé myši / K): úskok s nesmrtelností, stojí teplo. Při overclocku zraní bugy."
 custom_minimum_size = Vector2(700, 0)
 autowrap_mode = 3
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
@@ -241,7 +278,7 @@ vertical_alignment = 1
 
 [node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowFan"]
 theme_override_font_sizes/font_size = 17
-text = "VENTILÁTOR – ve sloupci vzduchu rychle chladneš (i při overclocku) a vzduch tě nadnáší."
+text = "VENTILÁTOR – ve sloupci vzduchu rychle chladneš (i při overclocku), 2× rychleji se nabíjí dash i vent a vzduch odfukuje bugy."
 custom_minimum_size = Vector2(660, 0)
 size_flags_vertical = 4
 autowrap_mode = 3
@@ -267,7 +304,7 @@ vertical_alignment = 1
 
 [node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky/RowPlatform"]
 theme_override_font_sizes/font_size = 17
-text = "POHYBLIVÁ PLOŠINA – jezdí sem a tam, veze tebe i bugy. Dá se proskočit i propadnout."
+text = "BLOKY – vysoké bloky jsou kryt: zastaví střely i bugy, kteří je musí obejít."
 custom_minimum_size = Vector2(660, 0)
 size_flags_vertical = 4
 autowrap_mode = 3
@@ -276,10 +313,143 @@ autowrap_mode = 3
 
 [node name="Tip" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Překážky"]
 theme_override_font_sizes/font_size = 16
-text = "Dolů + skok = propadneš plošinou. Bugové umí propadávat taky!"
+text = "Po každé vlně se otevře chodba do nového, náhodně vygenerovaného sektoru – žádný není stejný. Pohyb WASD, míříš myší. Bugy lákej na rozpálené plotny."
 custom_minimum_size = Vector2(700, 0)
 autowrap_mode = 3
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="Nepřátelé" type="VBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs"]
+theme_override_constants/separation = 14
+
+[node name="RowBug" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowBug"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(0.3, 0.92, 0.45, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowBug/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "B"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowBug"]
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 17
+text = "BUG – honí tě po zemi a obchází bloky. Dotyk ohřívá."
+autowrap_mode = 3
+
+[node name="RowDrone" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowDrone"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(0.75, 0.5, 1, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowDrone/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "D"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowDrone"]
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 17
+text = "DRON – rychlý, kličkuje a létá přes bloky. Za nimi se před ním neschováš."
+autowrap_mode = 3
+
+[node name="RowTurret" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowTurret"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(1, 0.5, 0.2, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowTurret/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "T"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowTurret"]
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 17
+text = "TURRET – stojí, rozsvítí se a vystřelí žhavou kouli. Schovej se za blok, nebo kouli prodashuj."
+autowrap_mode = 3
+
+[node name="RowTank" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowTank"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(0.5, 0.58, 0.65, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowTank/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "T"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowTank"]
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 17
+text = "TANK – pomalý a odolný, odhození mu skoro nevadí. Když umře, vybuchne – nezabíjej ho u sebe!"
+autowrap_mode = 3
+
+[node name="RowBoss" type="HBoxContainer" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé"]
+theme_override_constants/separation = 14
+
+[node name="Icon" type="ColorRect" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowBoss"]
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+color = Color(0.85, 0.2, 0.7, 1)
+
+[node name="Letter" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowBoss/Icon"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "V"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="Label" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs/Nepřátelé/RowBoss"]
+custom_minimum_size = Vector2(660, 0)
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 17
+text = "VIRUS.EXE – boss každé 5. vlny. Fáze 1: salvy koulí. Fáze 2: přivolává bugy. Fáze 3: zrychlí a jeho aura tě rozpaluje."
+autowrap_mode = 3
 
 [node name="Upgrady" type="RichTextLabel" parent="BonusesPanel/Center/Panel/Margin/VBox/Tabs"]
 theme_override_font_sizes/normal_font_size = 17
@@ -297,3 +467,5 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "Zpět"
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
