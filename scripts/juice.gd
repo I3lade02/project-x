@@ -23,12 +23,17 @@ const SOUNDS = {
 	"charge": preload("res://sounds/charge.wav"),
 	"cool": preload("res://sounds/cool.wav"),
 	"chip": preload("res://sounds/chip.wav"),
+	"core": preload("res://sounds/core.wav"),
 	"buy": preload("res://sounds/buy.wav"),
 	"shield": preload("res://sounds/shield.wav"),
 	"orb": preload("res://sounds/orb.wav"),
 	"boss_spawn": preload("res://sounds/boss_spawn.wav"),
 	"boss_phase": preload("res://sounds/boss_phase.wav"),
 	"boss_die": preload("res://sounds/boss_die.wav"),
+	"laser": preload("res://sounds/laser.wav"),
+	"teleport": preload("res://sounds/teleport.wav"),
+	"ram": preload("res://sounds/ram.wav"),
+	"shockwave": preload("res://sounds/shockwave.wav"),
 }
 const POOL_SIZE = 16
 

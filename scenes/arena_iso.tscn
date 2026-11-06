@@ -54,21 +54,27 @@ script = ExtResource("1")
 layer = -10
 
 [node name="Background" type="ColorRect" parent="Backdrop"]
-material = SubResource("grid_mat")
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = -40.0
 offset_top = -40.0
-offset_right = 1320.0
-offset_bottom = 760.0
+offset_right = 40.0
+offset_bottom = 40.0
+grow_horizontal = 1
+grow_vertical = 1
+material = SubResource("grid_mat")
 mouse_filter = 2
 color = Color(0.07, 0.08, 0.12, 1)
 
 [node name="Motes" type="CPUParticles2D" parent="Backdrop"]
-position = Vector2(640, 760)
+position = Vector2(640, 900)
 amount = 40
-lifetime = 9.0
-preprocess = 9.0
+lifetime = 12.0
+preprocess = 12.0
 emission_shape = 3
-emission_rect_extents = Vector2(680, 10)
+emission_rect_extents = Vector2(1000, 10)
 direction = Vector2(0, -1)
 spread = 10.0
 gravity = Vector2(0, 0)
@@ -99,26 +105,44 @@ script = ExtResource("8")
 layer = 2
 
 [node name="StatusLabel" type="Label" parent="HUD"]
-offset_left = 290.0
-offset_top = 300.0
-offset_right = 990.0
-offset_bottom = 350.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -60.0
+offset_right = 350.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="HUD"]
-offset_left = 960.0
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -320.0
 offset_top = 20.0
-offset_right = 1260.0
+offset_right = -20.0
 offset_bottom = 44.0
+grow_horizontal = 0
+grow_vertical = 1
 text = "SCORE: 0   x1"
 horizontal_alignment = 2
 
 [node name="WaveLabel" type="Label" parent="HUD"]
-offset_left = 390.0
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -250.0
 offset_top = 20.0
-offset_right = 890.0
+offset_right = 250.0
 offset_bottom = 44.0
+grow_horizontal = 2
+grow_vertical = 1
 text = "WAVE 1"
 horizontal_alignment = 1
 
@@ -175,11 +199,17 @@ mouse_filter = 2
 color = Color(0.5, 1, 1, 1)
 
 [node name="BossLabel" type="Label" parent="HUD"]
-visible = false
-offset_left = 440.0
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -200.0
 offset_top = 48.0
-offset_right = 840.0
+offset_right = 200.0
 offset_bottom = 72.0
+grow_horizontal = 2
+grow_vertical = 1
+visible = false
 theme_type_variation = &"HeaderLabel"
 theme_override_colors/font_color = Color(2.4, 0.5, 1.9, 1)
 theme_override_font_sizes/font_size = 18
@@ -187,14 +217,32 @@ text = "VIRUS.EXE"
 horizontal_alignment = 1
 
 [node name="BossBar" type="ProgressBar" parent="HUD"]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -200.0
+offset_top = 76.0
+offset_right = 200.0
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 1
 visible = false
 modulate = Color(2.4, 0.5, 1.9, 1)
-offset_left = 440.0
-offset_top = 76.0
-offset_right = 840.0
-offset_bottom = 90.0
 value = 100.0
 show_percentage = false
+
+[node name="CoresLabel" type="Label" parent="HUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 48.0
+offset_right = -20.0
+offset_bottom = 72.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1.6, 0.55, 2.3, 1)
+text = "JÁDRA  0"
+horizontal_alignment = 2
 
 [node name="P1Hud" parent="HUD" instance=ExtResource("17")]
 offset_left = 20.0
@@ -203,11 +251,17 @@ offset_right = 640.0
 offset_bottom = 100.0
 
 [node name="P2Hud" parent="HUD" instance=ExtResource("17")]
-visible = false
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = 616.0
+offset_top = -104.0
 offset_right = 640.0
-offset_bottom = 696.0
+offset_bottom = -24.0
+grow_horizontal = 1
+grow_vertical = 0
+visible = false
 
 [node name="Indicators" type="Control" parent="HUD"]
 anchors_preset = 15

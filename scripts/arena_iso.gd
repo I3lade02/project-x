@@ -9,6 +9,10 @@ const KINDS = {
 	"turret": preload("res://scenes/turret.tscn"),
 	"tank": preload("res://scenes/tank.tscn"),
 	"boss": preload("res://scenes/boss.tscn"),
+	"firewall": preload("res://scenes/boss_firewall.tscn"),
+	"miner": preload("res://scenes/boss_miner.tscn"),
+	"rootkit": preload("res://scenes/boss_rootkit.tscn"),
+	"bsod": preload("res://scenes/boss_bsod.tscn"),
 }
 const PICKUP_SCENE = preload("res://scenes/pickup_iso.tscn")
 const BLOCK_SCENE = preload("res://scenes/iso_block.tscn")
@@ -16,6 +20,7 @@ const PLATE_SCENE = preload("res://scenes/hot_plate_iso.tscn")
 const FAN_SCENE = preload("res://scenes/fan_iso.tscn")
 const CHIP_SCENE = preload("res://scenes/chip.tscn")
 const TERMINAL_SCENE = preload("res://scenes/terminal.tscn")
+const CORE_SCENE = preload("res://scenes/core.tscn")
 const PLAYER_SCENE = preload("res://scenes/player_iso.tscn")
 const Pickup = preload("res://scripts/pickup.gd")
 const Upgrades = preload("res://scripts/upgrades.gd")
@@ -30,7 +35,15 @@ const SIZE_RANGE = Vector2i(20, 26)     # velikost sektoru v dlaždicích (min, 
 const FIRST_SIZE = Vector2i(22, 25)
 const BOSS_SIZE = Vector2i(26, 26)
 const VOID_LAYER = 32                # kolizní vrstva 6 = okraj sektoru / díry
-const CHIPS = {"bug": 1, "drone": 1, "turret": 3, "tank": 4, "boss": 25}
+const CHIPS = {"bug": 1, "drone": 1, "turret": 3, "tank": 4, "boss": 25, "firewall": 25, "miner": 25, "rootkit": 25, "bsod": 25}
+# bossové (každá 5. vlna jeden, náhodně se střídají – žádný se neopakuje, dokud nepřijdou na řadu všichni)
+const BOSSES = {
+	"boss": {"name": "VIRUS.EXE", "color": Color(2.4, 0.5, 1.9), "hint": "Uhýbej salvám koulí, ve 3. fázi k němu nechoď blízko"},
+	"firewall": {"name": "FIREWALL.SYS", "color": Color(2.6, 0.9, 0.25), "hint": "Paprsky zastaví blok, dash jimi proletí"},
+	"miner": {"name": "MINER.EXE", "color": Color(2.2, 1.9, 0.3), "hint": "Uhni z dráhy nájezdu – po nárazu do zdi je zranitelný"},
+	"rootkit": {"name": "ROOTKIT.DLL", "color": Color(0.5, 2.6, 1.0), "hint": "Mizí a nechává miny – sleduj, kde se objeví"},
+	"bsod": {"name": "BSOD.SYS", "color": Color(0.6, 1.4, 3.0), "hint": "Rázovou vlnu proleť dashem"},
+}
 const REROLL_BASE = 3
 const COOP_ENEMY_MULT = 1.5          # v co-opu víc nepřátel
 const COOP_BOSS_HP = 1.6
@@ -56,6 +69,7 @@ const THEMES = [
 @onready var p1_hud = $HUD/P1Hud
 @onready var p2_hud = $HUD/P2Hud
 @onready var shop = $ShopScreen
+@onready var cores_label = $HUD/CoresLabel
 
 var score := 0
 var wave := 0
@@ -75,6 +89,12 @@ var players := []                 # všichni hráči (1 nebo 2)
 var local_player                  # hráč na tomto počítači (kvůli kameře, HUD a míření)
 var net_sync = null               # synchronizace po síti (jen v LAN)
 var choosing := []                # kdo ještě vybírá upgrade po vlně
+var run_cores := 0                # jádra sebraná v tomto runu (uloží se na konci)
+var banked := false               # jádra už uložena
+var boss_kind := "boss"           # boss aktuální / poslední bossí vlny
+
+static var boss_bag := []         # zamíchané pořadí bossů (přežije i restart)
+static var last_boss := ""
 
 
 func _ready():
@@ -107,6 +127,7 @@ func _ready():
 			Juice.play("reboot", -4.0, 0.0))
 		p.died.connect(_on_player_died.bind(p))
 	p1_hud.player = player
+	Progress.apply_to(player, Progress.levels)      # skill tree (hráč 1 / hostitel)
 	if players.size() > 1:
 		p2_hud.player = players[1]
 		p2_hud.show()
@@ -197,6 +218,7 @@ func _on_peer_left():
 
 
 func _exit_tree():
+	bank_run(run_cores)                # odchod uprostřed runu = uložit aspoň sebraná jádra
 	if GameSettings.coop:
 		GameSettings.restore_bindings()
 
@@ -586,12 +608,14 @@ func start_next_wave():
 	if game_over:
 		return
 	wave += 1
+	if wave % 5 == 0:
+		boss_kind = next_boss()
 	queue = build_wave(wave)
 	to_spawn = queue.size()
 	spawn_timer = 1.5
 	wave_label.text = "WAVE %d  ·  %s" % [wave, current["name"]]
 	if wave % 5 == 0:
-		show_status("!! BOSS: VIRUS.EXE !!", 2.5)
+		show_status("!! BOSS: %s !!\n%s" % [BOSSES[boss_kind]["name"], BOSSES[boss_kind]["hint"]], 3.5)
 		Juice.play("boss_spawn", 0.0, 0.0)
 		Juice.shake(0.5)
 		spawn_timer = 2.0
@@ -607,7 +631,7 @@ func start_next_wave():
 func build_wave(w: int) -> Array:
 	var q = []
 	if w % 5 == 0:
-		q.append("boss")
+		q.append(boss_kind)
 		for i in floori(w / 5.0):
 			q.append("drone")
 		return q
@@ -634,7 +658,11 @@ func build_wave(w: int) -> Array:
 func spawn_enemy():
 	var kind = queue.pop_front()
 	to_spawn = queue.size()
-	var pos = find_free_spot() if kind == "turret" else cell_center(current["layout"]["spawns"].pick_random())
+	var pos = cell_center(current["layout"]["spawns"].pick_random())
+	if kind == "turret":
+		pos = find_free_spot()
+	elif is_boss(kind):
+		pos = boss_spot()
 	add_enemy(kind, pos)
 
 
@@ -642,17 +670,20 @@ func add_enemy(kind: String, pos: Vector2):
 	var e = KINDS[kind].instantiate()
 	e.global_position = pos
 	e.speed = (110.0 + wave * 12.0) * enemy_speed_mult()
-	if kind == "boss":
-		e.hp = 150 + 70 * (floori(wave / 5.0) - 1) + enemy_hp_bonus() * 10
+	if is_boss(kind):
+		e.hp = roundi((150 + 70 * (floori(wave / 5.0) - 1) + enemy_hp_bonus() * 10) * e.hp_scale)
 		if players.size() > 1:
 			e.hp = roundi(e.hp * COOP_BOSS_HP)
 		e.summon.connect(func(k, p):
-			# přivolaný bug se nesmí objevit mimo sektor
-			if not current["layout"]["walk"].has(screen_to_cell(p)):
+			if k == "turret":
+				p = find_free_spot()
+			# přivolaný nepřítel se nesmí objevit mimo sektor
+			elif not current["layout"]["walk"].has(screen_to_cell(p)):
 				p = e.global_position
 			add_enemy(k, p))
 		e.hp_changed.connect(_on_boss_hp)
-		e.phase_changed.connect(func(ph): show_status("VIRUS.EXE – FÁZE %d" % ph, 1.5))
+		e.phase_changed.connect(func(ph): show_status("%s – FÁZE %d" % [BOSSES[kind]["name"], ph], 1.5))
+		set_boss_hud(kind)
 		boss_label.show()
 		boss_bar.show()
 	else:
@@ -664,9 +695,56 @@ func add_enemy(kind: String, pos: Vector2):
 	alive += 1
 
 
+func is_boss(kind: String) -> bool:
+	return BOSSES.has(kind)
+
+
+# další boss ze zamíchaného pytlíku
+func next_boss() -> String:
+	if boss_bag.is_empty():
+		boss_bag = BOSSES.keys()
+		boss_bag.shuffle()
+		if boss_bag[0] == last_boss:          # stejný boss dvakrát po sobě ne
+			boss_bag.push_back(boss_bag.pop_front())
+	last_boss = boss_bag.pop_front()
+	return last_boss
+
+
+# jméno a barva bosse v HUD
+func set_boss_hud(kind: String):
+	var b = BOSSES.get(kind, BOSSES["boss"])
+	boss_label.text = b["name"]
+	boss_label.add_theme_color_override("font_color", b["color"])
+	boss_bar.modulate = b["color"]
+
+
 func _on_boss_hp(hp, max_hp):
 	boss_bar.max_value = max_hp
 	boss_bar.value = hp
+
+
+# místo pro bosse: volné políčko s volným okolím co nejblíž středu sektoru (ať se nezasekne u kraje)
+func boss_spot() -> Vector2:
+	var free: Array = current["layout"]["free"]
+	var is_free := {}
+	var mid = Vector2.ZERO
+	for c in free:
+		is_free[c] = true
+		mid += Vector2(c)
+	mid /= free.size()
+	var best = free[0]
+	var best_d = INF
+	for c in free:
+		var open = true
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				if not is_free.has(c + Vector2i(dx, dy)):
+					open = false
+		var d = Vector2(c).distance_to(mid)
+		if open and d < best_d:
+			best_d = d
+			best = c
+	return cell_center(best)
 
 
 # volné místo pro turret: v sektoru, mimo bloky a ne těsně u hráče
@@ -703,14 +781,19 @@ func _on_enemy_died(pos, value, drops, kind):
 	elif randf() < drops * drop_mult():
 		spawn_pickup(pos)
 	spawn_chips(pos, CHIPS[kind])
-	if kind == "boss":
+	if is_boss(kind):
+		for i in Progress.BOSS_CORES:
+			spawn_core(pos + Vector2(randf_range(-30, 30), randf_range(-15, 15)))
+	elif randf() < Progress.CORE_DROP_CHANCE:
+		spawn_core(pos)
+	if is_boss(kind):
 		boss_label.hide()
 		boss_bar.hide()
 	if to_spawn == 0 and alive == 0 and not game_over:
-		show_status("VIRUS.EXE ODSTRANĚN!" if kind == "boss" else "WAVE CLEAR!", 1.0)
+		show_status(BOSSES[kind]["name"] + " ODSTRANĚN!" if is_boss(kind) else "WAVE CLEAR!", 1.0)
 		Juice.play("wave_clear", -2.0, 0.0)
-		for c in get_tree().get_nodes_in_group("chips"):
-			c.vacuum = true                   # čipy se slétnou k hráči
+		for c in get_tree().get_nodes_in_group("chips") + get_tree().get_nodes_in_group("cores"):
+			c.vacuum = true                   # čipy a jádra se slétnou k hráči
 		get_tree().create_timer(1.0).timeout.connect(_offer_upgrades)
 
 
@@ -729,7 +812,7 @@ func next_chooser():
 		if choices.is_empty():
 			choosing.pop_front()        # všechno už na maximu
 			continue
-		upgrade_screen.reroll_cost = REROLL_BASE
+		upgrade_screen.reroll_cost = 0 if p.get_meta("free_reroll", false) else REROLL_BASE
 		show_cards(choices)
 		return
 	open_exit()
@@ -785,7 +868,7 @@ func _on_reroll():
 		Juice.play("jam", -4.0)
 		return
 	p.chips -= upgrade_screen.reroll_cost
-	upgrade_screen.reroll_cost += 2
+	upgrade_screen.reroll_cost = REROLL_BASE if upgrade_screen.reroll_cost == 0 else upgrade_screen.reroll_cost + 2
 	Juice.play("buy", -4.0, 0.0)
 	show_cards(Upgrades.pick(p.upgrades, 3))
 
@@ -808,7 +891,9 @@ func _on_player_died(p):
 	Juice.shake(1.0)
 	Juice.hitstop(0.3)
 	var hint = "R = restart (hostitel)" if Net.is_online() else "R = restart"
-	status.text = "GAME OVER\nScore: %d   ·   Sektor %d\n%s" % [score, sector, hint]
+	var bonus = Progress.run_bonus(sector)
+	bank_run(run_cores + bonus)
+	status.text = "GAME OVER\nScore: %d   ·   Sektor %d\n+%d JADER  (sebráno %d + bonus %d)\n%s" % [score, sector, run_cores + bonus, run_cores, bonus, hint]
 
 
 # ============================================================
@@ -817,6 +902,52 @@ func _on_player_died(p):
 
 func update_score():
 	score_label.text = "SCORE: %d   x%d" % [score, team_mult()]
+	cores_label.text = "JÁDRA  %d" % run_cores
+
+
+# ============================================================
+#  Jádra (vzácná měna pro skill tree)
+# ============================================================
+
+func spawn_core(pos: Vector2):
+	var c = CORE_SCENE.instantiate()
+	if not current["layout"]["walk"].has(screen_to_cell(pos)):
+		pos = player.global_position
+	c.global_position = pos
+	c.vacuum = to_spawn == 0 and alive == 0
+	world.call_deferred("add_child", c)
+
+
+# sebral ho kterýkoli hráč (patří celému týmu)
+func collect_core():
+	run_cores += 1
+	update_score()
+	Juice.play("core", -2.0, 0.0)
+	show_status("+1 JÁDRO", 1.0)
+
+
+# uloží jádra do skill tree (jen jednou za run)
+func bank_run(total: int):
+	if banked:
+		return
+	banked = true
+	Progress.add_cores(total)
+	if net_sync and Net.is_host():
+		net_sync.send_run_end(total)
+
+
+# (host) skill tree hráče 2 poslaný po síti
+func apply_remote_meta(lv: Dictionary):
+	if players.size() > 1:
+		Progress.apply_to(players[1], lv)
+
+
+# (klient) hostitel ukončil run -> uložit jádra
+func client_run_end(total: int):
+	if banked:
+		return
+	banked = true
+	Progress.add_cores(total)
 
 
 # zobrazí text, volitelně ho po čase zase smaže

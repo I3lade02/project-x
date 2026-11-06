@@ -23,6 +23,7 @@ func _ready():
 	settings_btn.pressed.connect(_open_settings)
 	main_menu_btn.pressed.connect(_to_main_menu)
 	desktop_btn.pressed.connect(func():
+		_bank()
 		Net.leave()
 		get_tree().quit())
 	settings.closed.connect(func():
@@ -97,5 +98,13 @@ func _open_settings():
 
 func _to_main_menu():
 	get_tree().paused = false
+	_bank()
 	Net.leave()
 	get_tree().change_scene_to_file(MAIN_MENU)
+
+
+# při odchodu ze hry uložit sebraná jádra
+func _bank():
+	var arena = get_tree().current_scene
+	if arena and arena.has_method("bank_run"):
+		arena.bank_run(arena.run_cores)

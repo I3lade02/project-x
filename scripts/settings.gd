@@ -30,6 +30,8 @@ func _ready():
 
 
 func open():
+	# skrytý panel nemusí mít po změně velikosti okna správný rozměr (export na Macu) -> roztáhnout znovu
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	show()
 	refresh()
 	volume_slider.value = GameSettings.master_volume
