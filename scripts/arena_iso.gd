@@ -950,6 +950,34 @@ func client_run_end(total: int):
 	Progress.add_cores(total)
 
 
+# ============================================================
+#  Hudba (autoload Music si stav čte sama, funguje i u klienta v LAN)
+# ============================================================
+
+func music_state() -> Dictionary:
+	var mine = [local_player] if Net.is_online() and local_player else players
+	var heat = 0.0
+	var crash = false
+	var oc = 0
+	for p in mine:
+		if p and not p.dead:
+			heat = maxf(heat, p.heat / 100.0)
+			crash = crash or p.crash_timer > 0
+			oc = maxi(oc, p.oc_level)
+	var enemies = get_tree().get_nodes_in_group("enemies").size()
+	var boss = get_tree().get_first_node_in_group("boss")
+	return {
+		"mode": "game",
+		"fight": enemies > 0 or to_spawn > 0,
+		"intensity": clampf(enemies / 8.0, 0.0, 1.0),
+		"boss_phase": boss.phase if boss else 0,
+		"heat": heat,
+		"crash": crash,
+		"overclock": oc,
+		"game_over": game_over or alive_players().is_empty(),
+	}
+
+
 # zobrazí text, volitelně ho po čase zase smaže
 func show_status(text, time := 0.0):
 	if game_over:

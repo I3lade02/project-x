@@ -4,6 +4,7 @@ signal closed
 
 @onready var grid = $Center/Panel/Margin/VBox/Bindings
 @onready var volume_slider = $Center/Panel/Margin/VBox/VolumeRow/VolumeSlider
+@onready var music_slider = $Center/Panel/Margin/VBox/MusicRow/MusicSlider
 @onready var glow_slider = $Center/Panel/Margin/VBox/GlowRow/GlowSlider
 @onready var reset_btn = $Center/Panel/Margin/VBox/ButtonsRow/ResetButton
 @onready var back_btn = $Center/Panel/Margin/VBox/ButtonsRow/BackButton
@@ -23,6 +24,7 @@ func _ready():
 		grid.add_child(b)
 		buttons[action] = b
 	volume_slider.value_changed.connect(_on_volume_changed)
+	music_slider.value_changed.connect(_on_music_changed)
 	glow_slider.value_changed.connect(_on_glow_changed)
 	reset_btn.pressed.connect(_on_reset)
 	back_btn.pressed.connect(close)
@@ -35,6 +37,7 @@ func open():
 	show()
 	refresh()
 	volume_slider.value = GameSettings.master_volume
+	music_slider.value = GameSettings.music_volume
 	glow_slider.value = GameSettings.glow
 	back_btn.grab_focus()
 
@@ -90,8 +93,14 @@ func _on_volume_changed(value):
 	GameSettings.apply_volume()
 
 
+func _on_music_changed(value):
+	GameSettings.music_volume = value
+	GameSettings.apply_volume()
+
+
 func _on_reset():
 	GameSettings.reset_defaults()
 	volume_slider.value = GameSettings.master_volume
+	music_slider.value = GameSettings.music_volume
 	glow_slider.value = GameSettings.glow
 	refresh()
