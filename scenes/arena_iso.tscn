@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://scenes/shop_screen.tscn" id="15"]
 [ext_resource type="Script" path="res://scripts/offscreen_indicators.gd" id="16"]
 [ext_resource type="PackedScene" path="res://scenes/player_hud.tscn" id="17"]
+[ext_resource type="Script" path="res://scripts/minimap.gd" id="41"]
 
 [sub_resource type="TileSetAtlasSource" id="floor_src"]
 texture = ExtResource("9")
@@ -271,6 +272,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("16")
+
+[node name="Minimap" type="Control" parent="HUD"]
+mouse_filter = 2
+script = ExtResource("41")
 
 [node name="ShopScreen" parent="." instance=ExtResource("15")]
 

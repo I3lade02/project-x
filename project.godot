@@ -21,6 +21,7 @@ GameSettings="*res://scripts/game_settings.gd"
 Juice="*res://scripts/juice.gd"
 Net="*res://scripts/net.gd"
 Progress="*res://scripts/progress.gd"
+Music="*res://scripts/music.gd"
 
 [display]
 

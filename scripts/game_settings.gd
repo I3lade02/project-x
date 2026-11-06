@@ -17,6 +17,7 @@ const REBINDABLE = {
 }
 
 var master_volume := 1.0
+var music_volume := 0.8
 var coop := false               # 2 hráči na jedné klávesnici (nastaví hlavní menu, neukládá se)
 var _stripped := {}             # P1 klávesy dočasně odebrané kvůli hráči 2
 var glow := 0.5                 # intenzita záře (WorldEnvironment glow)
@@ -52,6 +53,7 @@ func load_settings():
 				if ev:
 					InputMap.action_add_event(action, ev)
 	master_volume = cfg.get_value("audio", "master", 1.0)
+	music_volume = cfg.get_value("audio", "music", 0.8)
 	glow = cfg.get_value("video", "glow", 0.5)
 	apply_volume()
 
@@ -66,6 +68,7 @@ func save_settings():
 				list.append(s)
 		cfg.set_value("input", action, list)
 	cfg.set_value("audio", "master", master_volume)
+	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("video", "glow", glow)
 	cfg.save(PATH)
 
@@ -83,6 +86,7 @@ func get_binding(action):
 func reset_defaults():
 	InputMap.load_from_project_settings()
 	master_volume = 1.0
+	music_volume = 0.8
 	glow = 0.5
 	apply_volume()
 	apply_glow()
@@ -91,6 +95,9 @@ func reset_defaults():
 
 func apply_volume():
 	AudioServer.set_bus_volume_db(0, linear_to_db(master_volume))
+	var music = get_node_or_null("/root/Music")
+	if music:
+		music.set_volume(music_volume)
 
 
 # --- převody pro uložení ---
