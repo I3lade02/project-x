@@ -6,6 +6,7 @@ const Upgrades = preload("res://scripts/upgrades.gd")
 @onready var menu = $Center
 @onready var start_btn = $Center/Menu/StartButton
 @onready var settings_btn = $Center/Menu/SettingsButton
+@onready var skill_btn = $Center/Menu/SkillTreeButton
 @onready var bonuses_btn = $Center/Menu/BonusesButton
 @onready var quit_btn = $Center/Menu/QuitButton
 @onready var bonuses = $BonusesPanel
@@ -28,6 +29,7 @@ const Upgrades = preload("res://scripts/upgrades.gd")
 @onready var lan_status = $LanPanel/Center/Panel/Margin/VBox/Status
 @onready var lan_back = $LanPanel/Center/Panel/Margin/VBox/BackButton
 @onready var notice = $Notice
+@onready var skill_tree = $SkillTree
 
 
 func _ready():
@@ -54,6 +56,12 @@ func _ready():
 	mode_back.pressed.connect(_close_modes)
 	settings_btn.pressed.connect(_open_settings)
 	bonuses_btn.pressed.connect(_open_bonuses)
+	skill_btn.pressed.connect(_open_tree)
+	skill_tree.closed.connect(func():
+		menu.show()
+		skill_btn.grab_focus())
+	Progress.changed.connect(_update_tree_btn)
+	_update_tree_btn()
 	quit_btn.pressed.connect(func(): get_tree().quit())
 	bonuses_back.pressed.connect(_close_bonuses)
 	settings.closed.connect(func():
@@ -67,6 +75,8 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel"):     # Esc zavře podmenu
 		if settings.visible:
 			settings.close()
+		elif skill_tree.visible:
+			skill_tree.close()
 		elif bonuses.visible:
 			_close_bonuses()
 		elif lan_panel.visible:
@@ -82,6 +92,7 @@ func _unhandled_input(event):
 func _open_lan():
 	mode_panel.hide()
 	lan_panel.show()
+	_fit(lan_panel)
 	lan_host_info.hide()
 	lan_host_btn.disabled = false
 	lan_status.text = ""
@@ -95,6 +106,7 @@ func _close_lan():
 	Net.leave()
 	lan_panel.hide()
 	mode_panel.show()
+	_fit(mode_panel)
 	lan_btn.grab_focus()
 
 
@@ -146,6 +158,7 @@ func _open_modes():
 	coop_hint.text = "Hráč 2: %s pohyb  ·  %s střelba  ·  %s dash  ·  %s overclock  ·  %s vent  ·  %s terminál.\nP2 míří automaticky na nejbližšího nepřítele." % [
 		"Šipky", _key("p2_shoot"), _key("p2_dash"), _key("p2_overclock"), _key("p2_vent"), _key("p2_interact")]
 	mode_panel.show()
+	_fit(mode_panel)
 	solo_btn.grab_focus()
 
 
@@ -191,6 +204,7 @@ func _open_settings():
 func _open_bonuses():
 	menu.hide()
 	bonuses.show()
+	_fit(bonuses)
 	bonuses_back.grab_focus()
 
 
@@ -198,3 +212,22 @@ func _close_bonuses():
 	bonuses.hide()
 	menu.show()
 	bonuses_btn.grab_focus()
+
+
+# skrytý panel přes celou obrazovku po změně velikosti okna (fullscreen, Retina) nemusí
+# mít aktuální rozměr -> při otevření ho znovu roztáhnout přes celé okno
+func _fit(panel: Control):
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+# ============================================================
+#  Skill tree
+# ============================================================
+
+func _open_tree():
+	menu.hide()
+	skill_tree.open()
+
+
+func _update_tree_btn():
+	skill_btn.text = "Skill tree  ·  %d jader" % Progress.cores

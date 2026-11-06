@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/settings.tscn" id="2"]
 [ext_resource type="Shader" path="res://shaders/grid_bg.gdshader" id="11"]
+[ext_resource type="PackedScene" path="res://scenes/skill_tree.tscn" id="20"]
 
 [sub_resource type="ShaderMaterial" id="grid_mat"]
 shader = ExtResource("11")
@@ -74,6 +75,11 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(300, 46)
 theme_override_font_sizes/font_size = 22
 text = "Start"
+
+[node name="SkillTreeButton" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(300, 46)
+theme_override_font_sizes/font_size = 22
+text = "Skill tree"
 
 [node name="SettingsButton" type="Button" parent="Center/Menu"]
 custom_minimum_size = Vector2(300, 46)
@@ -638,3 +644,5 @@ grow_vertical = 0
 theme_override_colors/font_color = Color(1.9, 0.6, 0.5, 1)
 horizontal_alignment = 1
 
+[node name="SkillTree" parent="." instance=ExtResource("20")]
+visible = false

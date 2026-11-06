@@ -4,18 +4,20 @@ extends Node
 ## Klient: zobrazuje stav (loutky), posílá vstupy, ukazuje karty upgradů a obchod.
 
 const SEND_EVERY = 2                    # snímek stavu každý 2. fyzikální krok (30 Hz)
-const BASENAME_KIND = {"enemy_iso": "bug", "drone": "drone", "turret": "turret", "tank": "tank", "boss": "boss"}
+const BASENAME_KIND = {"enemy_iso": "bug", "drone": "drone", "turret": "turret", "tank": "tank", "boss": "boss",
+	"boss_firewall": "firewall", "boss_miner": "miner", "boss_rootkit": "rootkit", "boss_bsod": "bsod"}
 const BULLET_SCENE = preload("res://scenes/bullet_iso.tscn")
 const ORB_SCENE = preload("res://scenes/heat_orb.tscn")
 const CHIP_SCENE = preload("res://scenes/chip.tscn")
 const PICKUP_SCENE = preload("res://scenes/pickup_iso.tscn")
 const TERMINAL_SCENE = preload("res://scenes/terminal.tscn")
+const CORE_SCENE = preload("res://scenes/core.tscn")
 
 var arena
 var client_ready := false               # (host) klient už má scénu načtenou
 var _frame := 0
 var _snap = null                        # (klient) poslední přijatý stav
-var _puppets := {"e": {}, "b": {}, "o": {}, "c": {}, "k": {}, "t": {}}
+var _puppets := {"e": {}, "b": {}, "o": {}, "c": {}, "k": {}, "t": {}, "r": {}}
 var _counts := {"dash": 0, "vent": 0, "interact": 0}
 var _interact_block := 0.0
 var _inited := false                   # (klient) dostal už svět od hostitele
@@ -26,7 +28,7 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	arena = get_parent()
 	if Net.is_client():
-		_hello.rpc_id(1)
+		_hello.rpc_id(1, Progress.levels)
 
 
 # ============================================================
@@ -34,10 +36,11 @@ func _ready():
 # ============================================================
 
 @rpc("any_peer", "call_remote", "reliable")
-func _hello():
+func _hello(meta_levels: Dictionary):
 	if not Net.is_host() or client_ready:
 		return
 	client_ready = true
+	arena.apply_remote_meta(meta_levels)      # skill tree hráče 2
 	var cur = arena.current
 	_init_world.rpc(cur["layout"], cur["theme"], cur["name"], arena.sector)
 
@@ -58,14 +61,15 @@ func build_snapshot() -> Dictionary:
 		var extra = 0.0
 		if kind == "turret":
 			extra = Vector2(n.gun.rotation, 1.0 - n.charging / n.CHARGE_TIME if n.charging > 0 else 0.0)
-		elif kind == "boss":
-			extra = n.phase
+		elif n.has_method("net_extra"):
+			extra = n.net_extra()
 		e.append([n.get_instance_id(), n.global_position, kind, n.hp, extra])
 	var b = []
 	var o = []
 	var c = []
 	var k = []
 	var t = []
+	var r = []
 	for n in arena.world.get_children():
 		var path = n.scene_file_path
 		if path.ends_with("bullet_iso.tscn"):
@@ -78,13 +82,15 @@ func build_snapshot() -> Dictionary:
 			k.append([n.get_instance_id(), n.global_position, n.type])
 		elif path.ends_with("terminal.tscn"):
 			t.append([n.get_instance_id(), n.global_position])
+		elif path.ends_with("core.tscn"):
+			r.append([n.get_instance_id(), n.global_position])
 	var p = []
 	for pl in arena.players:
 		p.append(pl.net_state())
 	var plates = [_plate_states(arena.current), _plate_states(arena.next_arena)]
 	var ui = [arena.score_label.text, arena.wave_label.text, arena.status.text,
-		arena.boss_bar.visible, arena.boss_bar.value, arena.boss_bar.max_value, arena.exit_target]
-	return {"p": p, "e": e, "b": b, "o": o, "c": c, "k": k, "t": t, "ui": ui, "pl": plates}
+		arena.boss_bar.visible, arena.boss_bar.value, arena.boss_bar.max_value, arena.exit_target, arena.run_cores, arena.boss_kind]
+	return {"p": p, "e": e, "b": b, "o": o, "c": c, "k": k, "t": t, "r": r, "ui": ui, "pl": plates}
 
 
 func _plate_states(rt: Dictionary) -> Array:
@@ -145,6 +151,12 @@ func _buy(id: String):
 		arena.remote_buy(id)
 
 
+# konec runu -> klient si uloží jádra
+func send_run_end(total: int):
+	if client_ready and is_inside_tree():
+		_run_end.rpc(total)
+
+
 func send_restart():
 	if client_ready:
 		_restart.rpc()
@@ -184,6 +196,11 @@ func _show_cards(choices: Array, corrupts: Array, owned: Dictionary, owned_corru
 @rpc("authority", "call_remote", "reliable")
 func _shop(data: Dictionary):
 	arena.shop.open_remote(data, func(id): _buy.rpc_id(1, id))
+
+
+@rpc("authority", "call_remote", "reliable")
+func _run_end(total: int):
+	arena.client_run_end(total)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -245,7 +262,7 @@ func _process(delta):
 		_hello_t -= delta
 		if _hello_t <= 0:
 			_hello_t = 1.0
-			_hello.rpc_id(1)
+			_hello.rpc_id(1, Progress.levels)
 	if _snap == null:
 		return
 	var s = _snap
@@ -260,6 +277,7 @@ func _process(delta):
 	_sync("c", s["c"], delta, func(_r): return CHIP_SCENE.instantiate(), Callable())
 	_sync("k", s["k"], delta, _make_pickup, Callable())
 	_sync("t", s["t"], delta, func(_r): return TERMINAL_SCENE.instantiate(), _update_terminal)
+	_sync("r", s["r"], delta, func(_r): return CORE_SCENE.instantiate(), Callable())
 	# UI
 	var ui = s["ui"]
 	arena.score_label.text = ui[0]
@@ -270,6 +288,11 @@ func _process(delta):
 	arena.boss_bar.max_value = ui[5]
 	arena.boss_bar.value = ui[4]
 	arena.exit_target = ui[6]
+	arena.run_cores = ui[7]
+	arena.cores_label.text = "JÁDRA  %d" % ui[7]
+	if ui[8] != arena.boss_kind:
+		arena.boss_kind = ui[8]
+		arena.set_boss_hud(ui[8])
 	# plotny
 	_apply_plates(arena.current, s["pl"][0])
 	_apply_plates(arena.next_arena, s["pl"][1])
@@ -339,9 +362,8 @@ func _update_enemy(n, r: Array):
 	if r[2] == "turret" and r[4] is Vector2:
 		n.gun.rotation = r[4].x
 		n.core.modulate = Color(1, 1, 1).lerp(Color(4, 1.2, 0.3), r[4].y)
-	elif r[2] == "boss":
-		n.phase = int(r[4])
-		n.aura.visible = n.phase >= 3
+	elif n.has_method("apply_net_extra"):
+		n.apply_net_extra(r[4])
 
 
 func _make_bullet(r: Array):

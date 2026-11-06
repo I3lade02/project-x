@@ -1,0 +1,245 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/boss_firewall.gd" id="1"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 16.0
+height = 64
+
+[sub_resource type="CircleShape2D" id="hit"]
+radius = 42
+
+[node name="BossFirewall" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 33
+motion_mode = 1
+script = ExtResource("1")
+hp = 150
+speed_scale = 0.28
+contact_heat = 35.0
+score_value = 500
+drops = 2.0
+knock_resist = 1.0
+separation_dist = 0.0
+burst_color = Color(2.6, 0.9, 0.25, 1)
+hp_scale = 1.1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+rotation = 1.5708
+shape = SubResource("shape")
+
+[node name="Shadow" type="Polygon2D" parent="."]
+color = Color(0, 0, 0, 0.5)
+polygon = PackedVector2Array(62.0, 0.0, 59.9, 8.0, 53.7, 15.5, 43.8, 21.9, 31.0, 26.8, 16.0, 29.9, 0.0, 31.0, -16.0, 29.9, -31.0, 26.8, -43.8, 21.9, -53.7, 15.5, -59.9, 8.0, -62.0, 0.0, -59.9, -8.0, -53.7, -15.5, -43.8, -21.9, -31.0, -26.8, -16.0, -29.9, -0.0, -31.0, 16.0, -29.9, 31.0, -26.8, 43.8, -21.9, 53.7, -15.5, 59.9, -8.0)
+
+[node name="Visual" type="Node2D" parent="."]
+modulate = Color(1.2, 1.2, 1.2, 1)
+
+[node name="Body" type="Node2D" parent="Visual"]
+
+[node name="Left" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.55, 0.14, 0.06, 1)
+polygon = PackedVector2Array(-58.0, 0.0, 0.0, 29.0, 0.0, -35.0, -58.0, -64.0)
+
+[node name="Right" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.36, 0.08, 0.04, 1)
+polygon = PackedVector2Array(58.0, 0.0, 0.0, 29.0, 0.0, -35.0, 58.0, -64.0)
+
+[node name="Top" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.8, 0.26, 0.09, 1)
+polygon = PackedVector2Array(0.0, -93.0, 58.0, -64.0, 0.0, -35.0, -58.0, -64.0)
+
+[node name="LeftMortar0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-58.0, -16.0, 0.0, 13.0, 0.0, 11.1, -58.0, -17.9)
+
+[node name="LeftMortar1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-58.0, -32.0, 0.0, -3.0, 0.0, -4.9, -58.0, -33.9)
+
+[node name="LeftMortar2" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-58.0, -48.0, 0.0, -19.0, 0.0, -20.9, -58.0, -49.9)
+
+[node name="LeftJoint0_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-38.9, 8.3, -37.4, 9.0, -37.4, -5.7, -38.9, -6.4)
+
+[node name="LeftJoint0_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-19.7, 17.9, -18.3, 18.6, -18.3, 3.9, -19.7, 3.1)
+
+[node name="LeftJoint1_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-48.1, -12.4, -46.7, -11.6, -46.7, -26.3, -48.1, -27.1)
+
+[node name="LeftJoint1_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-29.0, -2.8, -27.5, -2.1, -27.5, -16.8, -29.0, -17.5)
+
+[node name="LeftJoint1_2" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-9.9, 6.8, -8.4, 7.5, -8.4, -7.2, -9.9, -7.9)
+
+[node name="LeftJoint2_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-38.9, -23.7, -37.4, -23.0, -37.4, -37.7, -38.9, -38.4)
+
+[node name="LeftJoint2_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-19.7, -14.1, -18.3, -13.4, -18.3, -28.1, -19.7, -28.9)
+
+[node name="LeftJoint3_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-48.1, -44.4, -46.7, -43.6, -46.7, -58.3, -48.1, -59.1)
+
+[node name="LeftJoint3_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-29.0, -34.8, -27.5, -34.1, -27.5, -48.8, -29.0, -49.5)
+
+[node name="LeftJoint3_2" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(-9.9, -25.2, -8.4, -24.5, -8.4, -39.2, -9.9, -39.9)
+
+[node name="RightMortar0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(58.0, -16.0, 0.0, 13.0, 0.0, 11.1, 58.0, -17.9)
+
+[node name="RightMortar1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(58.0, -32.0, 0.0, -3.0, 0.0, -4.9, 58.0, -33.9)
+
+[node name="RightMortar2" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(58.0, -48.0, 0.0, -19.0, 0.0, -20.9, 58.0, -49.9)
+
+[node name="RightJoint0_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(38.9, 8.3, 37.4, 9.0, 37.4, -5.7, 38.9, -6.4)
+
+[node name="RightJoint0_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(19.7, 17.9, 18.3, 18.6, 18.3, 3.9, 19.7, 3.1)
+
+[node name="RightJoint1_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(48.1, -12.4, 46.7, -11.6, 46.7, -26.3, 48.1, -27.1)
+
+[node name="RightJoint1_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(29.0, -2.8, 27.5, -2.1, 27.5, -16.8, 29.0, -17.5)
+
+[node name="RightJoint1_2" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(9.9, 6.8, 8.4, 7.5, 8.4, -7.2, 9.9, -7.9)
+
+[node name="RightJoint2_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(38.9, -23.7, 37.4, -23.0, 37.4, -37.7, 38.9, -38.4)
+
+[node name="RightJoint2_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(19.7, -14.1, 18.3, -13.4, 18.3, -28.1, 19.7, -28.9)
+
+[node name="RightJoint3_0" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(48.1, -44.4, 46.7, -43.6, 46.7, -58.3, 48.1, -59.1)
+
+[node name="RightJoint3_1" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(29.0, -34.8, 27.5, -34.1, 27.5, -48.8, 29.0, -49.5)
+
+[node name="RightJoint3_2" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.18, 0.04, 0.02, 1)
+polygon = PackedVector2Array(9.9, -25.2, 8.4, -24.5, 8.4, -39.2, 9.9, -39.9)
+
+[node name="Merlon0L" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.6, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-12.0, -82.0, 0.0, -76.0, 0.0, -90.0, -12.0, -96.0)
+
+[node name="Merlon0R" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.4, 0.1, 0.05, 1)
+polygon = PackedVector2Array(12.0, -82.0, 0.0, -76.0, 0.0, -90.0, 12.0, -96.0)
+
+[node name="Merlon0T" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.95, 0.32, 0.1, 1)
+polygon = PackedVector2Array(0.0, -102.0, 12.0, -96.0, 0.0, -90.0, -12.0, -96.0)
+
+[node name="Merlon1L" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.6, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-56.0, -64.0, -44.0, -58.0, -44.0, -72.0, -56.0, -78.0)
+
+[node name="Merlon1R" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.4, 0.1, 0.05, 1)
+polygon = PackedVector2Array(-32.0, -64.0, -44.0, -58.0, -44.0, -72.0, -32.0, -78.0)
+
+[node name="Merlon1T" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.95, 0.32, 0.1, 1)
+polygon = PackedVector2Array(-44.0, -84.0, -32.0, -78.0, -44.0, -72.0, -56.0, -78.0)
+
+[node name="Merlon2L" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.6, 0.16, 0.07, 1)
+polygon = PackedVector2Array(32.0, -64.0, 44.0, -58.0, 44.0, -72.0, 32.0, -78.0)
+
+[node name="Merlon2R" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.4, 0.1, 0.05, 1)
+polygon = PackedVector2Array(56.0, -64.0, 44.0, -58.0, 44.0, -72.0, 56.0, -78.0)
+
+[node name="Merlon2T" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.95, 0.32, 0.1, 1)
+polygon = PackedVector2Array(44.0, -84.0, 56.0, -78.0, 44.0, -72.0, 32.0, -78.0)
+
+[node name="Merlon3L" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.6, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-12.0, -46.0, 0.0, -40.0, 0.0, -54.0, -12.0, -60.0)
+
+[node name="Merlon3R" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.4, 0.1, 0.05, 1)
+polygon = PackedVector2Array(12.0, -46.0, 0.0, -40.0, 0.0, -54.0, 12.0, -60.0)
+
+[node name="Merlon3T" type="Polygon2D" parent="Visual/Body"]
+color = Color(0.95, 0.32, 0.1, 1)
+polygon = PackedVector2Array(0.0, -66.0, 12.0, -60.0, 0.0, -54.0, -12.0, -60.0)
+
+[node name="Core" type="Polygon2D" parent="Visual/Body"]
+color = Color(3, 1.1, 0.25, 1)
+polygon = PackedVector2Array(0.0, -126.0, 9.0, -100.0, 19.0, -86.0, 12.0, -70.0, 0.0, -64.0, -12.0, -70.0, -19.0, -86.0, -9.0, -100.0)
+
+[node name="Flame" type="Polygon2D" parent="Visual/Body"]
+color = Color(3.5, 2.6, 0.9, 1)
+polygon = PackedVector2Array(0.0, -106.0, 6.0, -88.0, 5.0, -74.0, 0.0, -70.0, -5.0, -74.0, -6.0, -88.0)
+
+[node name="TopTrim" type="Line2D" parent="Visual/Body"]
+points = PackedVector2Array(0.0, -93.0, 58.0, -64.0, 0.0, -35.0, -58.0, -64.0)
+closed = true
+width = 2
+default_color = Color(2.4, 0.7, 0.2, 1)
+joint_mode = 2
+
+[node name="EdgeTrim" type="Line2D" parent="Visual/Body"]
+points = PackedVector2Array(-58.0, 0.0, -58.0, -64.0)
+closed = false
+width = 2
+default_color = Color(2.4, 0.7, 0.2, 1)
+joint_mode = 2
+
+[node name="EdgeTrim2" type="Line2D" parent="Visual/Body"]
+points = PackedVector2Array(58.0, 0.0, 58.0, -64.0)
+closed = false
+width = 2
+default_color = Color(2.4, 0.7, 0.2, 1)
+joint_mode = 2
+
+[node name="FrontTrim" type="Line2D" parent="Visual/Body"]
+points = PackedVector2Array(0.0, 29.0, 0.0, -35.0)
+closed = false
+width = 2
+default_color = Color(2.4, 0.7, 0.2, 1)
+joint_mode = 2
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("hit")

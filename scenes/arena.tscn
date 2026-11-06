@@ -19,7 +19,6 @@ shader = ExtResource("11")
 shader_parameter/base_color = Color(0.015, 0.015, 0.05, 1)
 shader_parameter/grid_color = Color(0.3, 0.12, 0.75, 1)
 shader_parameter/hot_color = Color(1, 0.15, 0.05, 1)
-shader_parameter/size = Vector2(1360, 800)
 shader_parameter/cell = 48.0
 shader_parameter/scroll_speed = 12.0
 
@@ -274,6 +273,15 @@ offset_right = 320.0
 offset_bottom = 44.0
 show_percentage = false
 
+[node name="RedlineMark" type="ColorRect" parent="HUD/HeatBar" unique_id=1751569484]
+layout_mode = 0
+offset_left = 239.0
+offset_top = -4.0
+offset_right = 241.0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(3, 0.3, 0.2, 1)
+
 [node name="HeatLabel" type="Label" parent="HUD" unique_id=1342215477]
 offset_left = 330.0
 offset_top = 20.0
@@ -364,6 +372,14 @@ offset_bottom = 1.0
 mouse_filter = 2
 color = Color(0.5, 1, 1, 1)
 
+[node name="HeatInfo" type="Label" parent="HUD" unique_id=1372339284]
+offset_left = 20.0
+offset_top = 48.0
+offset_right = 620.0
+offset_bottom = 72.0
+theme_override_font_sizes/font_size = 16
+text = "OC -   VENT OK"
+
 [node name="SpawnPoints" type="Node2D" parent="." unique_id=1690142353]
 
 [node name="Left" type="Marker2D" parent="SpawnPoints" unique_id=659308663]
@@ -397,19 +413,3 @@ mouse_filter = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=771702504]
 environment = SubResource("env")
-
-[node name="HeatInfo" type="Label" parent="HUD"]
-offset_left = 20.0
-offset_top = 48.0
-offset_right = 620.0
-offset_bottom = 72.0
-theme_override_font_sizes/font_size = 16
-text = "OC -   VENT OK"
-
-[node name="RedlineMark" type="ColorRect" parent="HUD/HeatBar"]
-offset_left = 239.0
-offset_top = -4.0
-offset_right = 241.0
-offset_bottom = 28.0
-mouse_filter = 2
-color = Color(3, 0.3, 0.2, 1)
